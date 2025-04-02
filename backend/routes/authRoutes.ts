@@ -8,35 +8,64 @@ dotenv.config();
 
 const router = express.Router();
 
-// Register a new user
+if (!process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET is not defined in the environment variables');
+}
+
 router.post('/register', async (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-  const existingUser = await User.findOne({ email });
-  if (existingUser) return res.status(400).json({ message: 'User already exists' });
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
 
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const newUser = new User({ email, password: hashedPassword });
-  await newUser.save();
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
 
-  const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET as string, { expiresIn: '1h' });
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-  res.status(201).json({ token });
+    const newUser = new User({ email, password: hashedPassword });
+    await newUser.save();
+
+    const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET as string, { expiresIn: '1h' });
+
+    res.status(201).json({ token });
+  } catch (error) {
+    console.error('Error during registration:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
 });
 
 // Login
 router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-  const user = await User.findOne({ email });
-  if (!user) return res.status(400).json({ message: 'User not found' });
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
 
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' });
+    }
 
-  const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET as string, { expiresIn: '1h' });
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
 
-  res.status(200).json({ token });
+    // Generate a JWT token
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET as string, { expiresIn: '1h' });
+
+    res.status(200).json({ token });
+  } catch (error) {
+    console.error('Error during login:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
 });
 
 export default router;

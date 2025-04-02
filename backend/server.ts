@@ -6,7 +6,7 @@ import { graphqlHTTP } from 'express-graphql';
 import path from 'path';
 import authRoutes from './routes/authRoutes';
 import portfolioRoutes from './routes/portfolioRoutes';
-import { graphqlSchema, rootValue } from './graphql/schema';
+
 
 dotenv.config();
 
@@ -17,7 +17,7 @@ app.use(express.json());
 
 // Connect to MongoDB
 mongoose
-  .connect(process.env.MONGODB_URI as string, { useNewUrlParser: true, useUnifiedTopology: true })
+  .connect(process.env.MONGODB_URI as string)
   .then(() => console.log('MongoDB connected'))
   .catch((error) => console.log('MongoDB connection error:', error));
 
