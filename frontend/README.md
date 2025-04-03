@@ -1,91 +1,87 @@
-# Crypto Portfolio Management Application
+# Welcome to React Router!
 
-This is a cryptocurrency portfolio management application built using React for the frontend and Node.js with Express for the backend. The application allows users to manage their cryptocurrency investments, track their portfolio performance, and log transactions.
+A modern, production-ready template for building full-stack React applications using React Router.
+
+[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
 
 ## Features
 
-- User authentication and authorization
-- Add, update, and delete cryptocurrencies in the portfolio
-- View transaction history
-- Responsive design for mobile and desktop
+- 🚀 Server-side rendering
+- ⚡️ Hot Module Replacement (HMR)
+- 📦 Asset bundling and optimization
+- 🔄 Data loading and mutations
+- 🔒 TypeScript by default
+- 🎉 TailwindCSS for styling
+- 📖 [React Router docs](https://reactrouter.com/)
 
-## Technologies Used
+## Getting Started
 
-- **Frontend**: React, React Router, CSS
-- **Backend**: Node.js, Express, MongoDB, Mongoose, JWT
-- **Others**: Axios for API calls, Chart.js for data visualization
+### Installation
 
-## Project Structure
+Install the dependencies:
 
-```
-crypto-portfolio-app
-├── backend
-│   ├── src
-│   │   ├── controllers
-│   │   ├── models
-│   │   ├── routes
-│   │   └── index.js
-│   ├── package.json
-│   └── README.md
-├── frontend
-│   ├── public
-│   ├── src
-│   │   ├── components
-│   │   ├── routes
-│   │   ├── styles
-│   │   ├── App.jsx
-│   │   └── index.jsx
-│   ├── package.json
-│   └── README.md
-└── README.md
+```bash
+npm install
 ```
 
-## Setup Instructions
+### Development
 
-### Backend
+Start the development server with HMR:
 
-1. Navigate to the `backend` directory:
-   ```
-   cd backend
-   ```
+```bash
+npm run dev
+```
 
-2. Install dependencies:
-   ```
-   npm install
-   ```
+Your application will be available at `http://localhost:5173`.
 
-3. Set up your MongoDB database and update the connection string in `src/index.js`.
+## Building for Production
 
-4. Start the server:
-   ```
-   npm start
-   ```
+Create a production build:
 
-### Frontend
+```bash
+npm run build
+```
 
-1. Navigate to the `frontend` directory:
-   ```
-   cd frontend
-   ```
+## Deployment
 
-2. Install dependencies:
-   ```
-   npm install
-   ```
+### Docker Deployment
 
-3. Start the React application:
-   ```
-   npm start
-   ```
+To build and run using Docker:
 
-## Usage
+```bash
+docker build -t my-app .
 
-Once both the backend and frontend are running, you can access the application in your web browser at `http://localhost:3000`. You can create an account, log in, and start managing your cryptocurrency portfolio.
+# Run the container
+docker run -p 3000:3000 my-app
+```
 
-## Contributing
+The containerized application can be deployed to any platform that supports Docker, including:
 
-Contributions are welcome! Please open an issue or submit a pull request for any enhancements or bug fixes.
+- AWS ECS
+- Google Cloud Run
+- Azure Container Apps
+- Digital Ocean App Platform
+- Fly.io
+- Railway
 
-## License
+### DIY Deployment
 
-This project is licensed under the MIT License.
+If you're familiar with deploying Node applications, the built-in app server is production-ready.
+
+Make sure to deploy the output of `npm run build`
+
+```
+├── package.json
+├── package-lock.json (or pnpm-lock.yaml, or bun.lockb)
+├── build/
+│   ├── client/    # Static assets
+│   └── server/    # Server-side code
+```
+
+## Styling
+
+This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
+
+---
+
+Built with ❤️ using React Router.
