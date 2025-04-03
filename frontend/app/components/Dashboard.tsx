@@ -1,47 +1,46 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useEffect } from 'react';
 
-interface CryptoPrices {
-  [key: string]: {
-    usd: number;
-  };
-}
+const Dashboard: React.FC = () => {
 
-const Dashboard = () => {
-  const [prices, setPrices] = useState<CryptoPrices | null>(null);  
-  const [cryptoIds, setCryptoIds] = useState('bitcoin,ethereum');  
+  useEffect(() => { 
+    const script = document.createElement('script');
+    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
+    script.async = true;
 
-  useEffect(() => {
-    axios
-      .get<CryptoPrices>(`http://localhost:5000/api/crypto/prices?ids=${cryptoIds}`)
-      .then((response) => {
-        setPrices(response.data); 
-      })
-      .catch((error) => {
-        console.error('Error fetching crypto data:', error);
-      });
-  }, [cryptoIds]);  
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
 
   return (
     <div>
-      <h1>Crypto Portfolio Tracker</h1>
-      <input
-        type="text"
-        value={cryptoIds}
-        onChange={(e) => setCryptoIds(e.target.value)}  
-        placeholder="Enter crypto names (e.g., bitcoin, ethereum)"
-      />
-      {prices ? (
-        <div>
-          {Object.keys(prices).map((crypto) => (
-            <h2 key={crypto}>
-              {crypto.charAt(0).toUpperCase() + crypto.slice(1)} Price: ${prices[crypto].usd}
-            </h2>
-          ))}
+      <h1>Crypto Portfolio Dashboard</h1>
+      
+      {/* TradingView Widget */}
+      <div className="tradingview-widget-container" style={{ height: '100%', width: '100%' }}>
+        <div className="tradingview-widget-container__widget" style={{ height: 'calc(100% - 32px)', width: '100%' }}></div>
+        <div className="tradingview-widget-copyright">
+          <a href="https://www.tradingview.com" rel="noopener" target="_blank">
+            <span className="blue-text">Track all markets on TradingView</span>
+          </a>
         </div>
-      ) : (
-        <p>Loading crypto prices...</p>
-      )}
+        <script type="text/javascript" dangerouslySetInnerHTML={{
+          __html: `
+            new TradingView.widget({
+              "autosize": true,
+              "symbol": "BITFINEX:BTCUSD",  // Modify this line for the desired crypto coin symbol
+              "interval": "D",
+              "timezone": "Etc/UTC",
+              "theme": "dark",
+              "style": "1",
+              "locale": "en",
+              "allow_symbol_change": true,
+              "support_host": "https://www.tradingview.com"
+            });
+          `}} />
+      </div>
     </div>
   );
 };
