@@ -1,6 +1,7 @@
 import type { Route } from "./+types/landing";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
+import axios from "axios";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -9,13 +10,33 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-// Sample trending coins data - would be fetched from API in production
-const trendingCoins = [
+// State for trending coins
+const [trendingCoins, setTrendingCoins] = useState([
   { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', price: '61,247.83', change: '+2.4%', color: 'text-green-500' },
   { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', price: '3,459.22', change: '+1.8%', color: 'text-green-500' },
   { id: 'solana', name: 'Solana', symbol: 'SOL', price: '139.65', change: '+5.7%', color: 'text-green-500' },
   { id: 'cardano', name: 'Cardano', symbol: 'ADA', price: '0.59', change: '-0.9%', color: 'text-red-500' },
-];
+]);
+
+// Fetch trending coins data from CoinGecko API
+useEffect(() => {
+  const fetchTrendingCoins = async () => {
+    try {
+      const response = await axios.get(
+        "https://api.coingecko.com/api/v3/coins/markets", {
+          params: {
+            vs_currency: "usd",
+            ids: "bitcoin,ethereum,solana,cardano",  // You can dynamically add more coin IDs here
+          }
+        });
+      setTrendingCoins(response.data);
+    } catch (error) {
+      console.error("Error fetching coin data:", error);
+    }
+  };
+
+  fetchTrendingCoins();
+}, []);
 
 // Sample features data
 const features = [
