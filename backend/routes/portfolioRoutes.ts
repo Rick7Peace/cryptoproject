@@ -1,23 +1,31 @@
 import express from 'express';
-import Portfolio from '../models/Portfolio';
-import User from '../models/User';
+import { 
+  getPortfolio, 
+  addToPortfolio, 
+  updateHolding, 
+  removeFromPortfolio,
+  getPortfolioStats
+} from '../controllers/portfolioController';
+import { authenticate } from '../middleware/authMiddleware';
 
 const router = express.Router();
 
-router.get('/:userId', async (req, res) => {
-  const user = await User.findById(req.params.userId).populate('portfolio');
-  if (!user) return res.status(404).json({ message: 'User not found' });
+// All portfolio routes require authentication
+router.use(authenticate);
 
-  res.status(200).json(user.portfolio);
-});
+// Get user's portfolio
+router.get('/', getPortfolio);
 
-router.put('/:userId', async (req, res) => {
-  const user = await User.findById(req.params.userId);
-  if (!user) return res.status(404).json({ message: 'User not found' });
+// Get portfolio statistics
+router.get('/stats', getPortfolioStats);
 
-  const updatedPortfolio = await Portfolio.findByIdAndUpdate(user.portfolio, req.body, { new: true });
+// Add coin to portfolio
+router.post('/add/:coinId', addToPortfolio);
 
-  res.status(200).json(updatedPortfolio);
-});
+// Update holding (buy more or sell)
+router.put('/update/:coinId', updateHolding);
+
+// Remove coin from portfolio
+router.delete('/remove/:coinId', removeFromPortfolio);
 
 export default router;
