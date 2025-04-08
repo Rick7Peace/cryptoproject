@@ -20,7 +20,19 @@ export const fetchTopCryptos = async (limit: number = 100) => {
     });
 
     // Update or create crypto documents
-    const promises = response.data.map(async (coin: any) => {
+    interface Coin {
+      id: string;
+      symbol: string;
+      name: string;
+      image: string;
+      current_price: number;
+      market_cap: number;
+      market_cap_rank: number;
+      price_change_percentage_24h: number;
+    }
+
+    const coins: Coin[] = response.data as Coin[];
+    const promises = coins.map(async (coin: Coin) => {
       return await Crypto.findOneAndUpdate(
         { coinId: coin.id },
         {

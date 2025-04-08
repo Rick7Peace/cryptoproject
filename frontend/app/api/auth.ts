@@ -1,5 +1,18 @@
 import type { User } from '../types/auth';
 
+// Define the AuthResponse type
+export interface AuthResponse {
+  success: boolean;
+  message: string;
+  accessToken?: string;
+  refreshToken?: string;
+  user?: User;
+}
+import axios from 'axios';
+import type { User as AuthUser } from './index';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
 // Define types for authorization
 export interface Permission {
   id: string;
@@ -134,4 +147,101 @@ export const authorizationApi = {
   }
 };
 
-export default authorizationApi;
+/**
+ * Authentication API service
+ */
+const authApi = {
+  /**
+   * Register a new user
+   */
+  register: async (userData: {
+    username: string;
+    email: string;
+    password: string;
+  }): Promise<AuthResponse> => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/auth/register`, userData);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Registration failed');
+    }
+  },
+
+  /**
+   * Log in a user
+   */
+  login: async (credentials: {
+    email: string;
+    password: string;
+  }): Promise<AuthResponse> => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/auth/login`, credentials);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Login failed');
+    }
+  },
+
+  /**
+   * Refresh access token
+   */
+  refreshToken: async (token: string): Promise<{
+    accessToken: string;
+    refreshToken: string;
+  }> => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/auth/refresh-token`, {
+        refreshToken: token
+      });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Token refresh failed');
+    }
+  },
+
+  /**
+   * Log out a user
+   */
+  logout: async (token: string): Promise<{ success: boolean }> => {
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/auth/logout`, 
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Logout failed');
+    }
+  },
+
+  /**
+   * Get current user profile
+   */
+  getCurrentUser: async (token: string): Promise<AuthUser> => {
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/auth/me`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+      
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to fetch user profile');
+      }
+      
+      return response.data.user;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Failed to get current user');
+    }
+  }
+};
+
+export default authApi;
