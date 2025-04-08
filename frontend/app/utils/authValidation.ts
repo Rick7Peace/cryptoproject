@@ -1,4 +1,19 @@
-export interface PasswordValidationOptions {
+/**
+ * Authentication validation utilities
+ * Provides validation functions for authentication-related forms and fields
+ */
+
+/**
+ * Email validation options
+ */
+export interface EmailValidationOptions {
+    required?: boolean;
+  }
+  
+  /**
+   * Password validation options
+   */
+  export interface PasswordValidationOptions {
     required?: boolean;
     minLength?: number;
     requireUppercase?: boolean;
@@ -33,8 +48,8 @@ export interface PasswordValidationOptions {
       return { valid: true, message: '' };
     }
   
-    // RFC 5322 compliant regex for email validation
-    const emailRegex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    // Simpler email validation regex with lower complexity
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     
     if (!emailRegex.test(email)) {
       return { valid: false, message: 'Please enter a valid email address' };
@@ -91,14 +106,14 @@ export interface PasswordValidationOptions {
       };
     }
   
-    if (requireNumbers && !/[0-9]/.test(password)) {
+    if (requireNumbers && !/\d/.test(password)) {
       return {
         valid: false,
         message: 'Password must contain at least one number',
       };
     }
   
-    if (requireSpecialChars && !/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+    if (requireSpecialChars && !/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
       return {
         valid: false,
         message: 'Password must contain at least one special character',
@@ -175,10 +190,11 @@ export interface PasswordValidationOptions {
     const passwordValidation = validatePassword(password);
     const confirmValidation = validatePasswordConfirmation(password, confirmPassword);
     
-    const usernameValidation = !username ? { valid: true, message: '' } : 
-      (username.length < 3 ? 
-        { valid: false, message: 'Username must be at least 3 characters long' } : 
-        { valid: true, message: '' });
+    // Extract nested ternary for better readability
+    let usernameValidation = { valid: true, message: '' };
+    if (username && username.length < 3) {
+      usernameValidation = { valid: false, message: 'Username must be at least 3 characters long' };
+    }
   
     const isValid = emailValidation.valid && 
       passwordValidation.valid && 
@@ -250,8 +266,8 @@ export interface PasswordValidationOptions {
     // Character types contribution
     if (/[A-Z]/.test(password)) strength += 1;
     if (/[a-z]/.test(password)) strength += 1;
-    if (/[0-9]/.test(password)) strength += 1;
-    if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) strength += 1;
+    if (/\d/.test(password)) strength += 1;
+    if (/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) strength += 1;
     
     return Math.min(5, strength);
   };
