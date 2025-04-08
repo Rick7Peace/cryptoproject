@@ -25,7 +25,7 @@ const cryptoSchema: Schema = new Schema({
 });
 
 // Indexes for faster lookups
-cryptoSchema.index({ coinId: 1 });
+//cryptoSchema.index({ coinId: 1 });
 cryptoSchema.index({ symbol: 1 });
 
 const Crypto = mongoose.model<ICrypto>('Crypto', cryptoSchema);
