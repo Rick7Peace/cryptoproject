@@ -5,7 +5,7 @@ export interface AuthResponse {
   message: string;
   accessToken?: string;
   refreshToken?: string;
-  user?: User;
+  user?: AuthUser;
 }
 import axios from 'axios';
 import type { User as AuthUser } from './index';
