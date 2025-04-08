@@ -172,3 +172,31 @@ export const logout = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const validateToken = async (req: Request, res: Response) => {
+  try {
+    // The authenticate middleware already verified the token
+    // and attached the user to the request
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        message: 'User not authenticated'
+      });
+      return;
+    }
+    
+    // Return the user without password
+    const userObj = req.user.toObject();
+    delete (userObj as { password?: string }).password;
+    
+    res.status(200).json({
+      success: true,
+      user: userObj
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error validating token'
+    });
+  }
+};

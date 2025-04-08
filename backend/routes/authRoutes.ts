@@ -1,5 +1,5 @@
 import express from 'express';
-import { register, login, refreshToken, logout } from '../controllers/authController';
+import { register, login, refreshToken, logout, validateToken } from '../controllers/authController';
 import { authenticate } from '../middleware/authMiddleware';
 import dotenv from 'dotenv';
 
@@ -19,5 +19,8 @@ router.post('/refresh-token', refreshToken);
 // Protected routes
 router.use('/logout', authenticate);
 router.post('/logout', logout);
+
+// Add this validation endpoint
+router.get('/validate', authenticate, validateToken);
 
 export default router;

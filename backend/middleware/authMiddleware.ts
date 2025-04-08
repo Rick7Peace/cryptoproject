@@ -12,6 +12,10 @@ declare global {
   }
 }
 
+/**
+ * Middleware to authenticate requests using JWT
+ * Verifies the token and attaches the user to the request object
+ */
 export const authenticate = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization;
@@ -22,8 +26,12 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
     
     const token = authHeader.split(' ')[1];
     
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET environment variable is not defined');
+    }
+    
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { id: string };
+    const decoded = jwt.verify(token, process.env.JWT_SECRET) as { id: string };
     
     // Get user from database
     const user = await User.findById(decoded.id).select('-password');
@@ -41,12 +49,19 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
         success: false,
         message: 'Invalid token',
       });
+    } else if (error instanceof jwt.TokenExpiredError) {
+      res.status(401).json({
+        success: false,
+        message: 'Token expired',
+        expired: true
+      });
     } else if (error instanceof ApiError) {
       res.status(error.statusCode).json({
         success: false,
         message: error.message,
       });
     } else {
+      console.error('Authentication error:', error);
       res.status(500).json({
         success: false,
         message: 'Authentication error',
@@ -55,6 +70,9 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
+/**
+ * Middleware to check if the authenticated user is an admin
+ */
 export const isAdmin = (req: Request, res: Response, next: NextFunction) => {
   if (req.user && req.user.role === 'admin') {
     next();
@@ -63,5 +81,38 @@ export const isAdmin = (req: Request, res: Response, next: NextFunction) => {
       success: false,
       message: 'Not authorized as admin',
     });
+  }
+};
+
+/**
+ * Optional middleware - only proceeds if user is authenticated
+ * but doesn't block the request if no token is provided
+ */
+export const optionalAuth = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const authHeader = req.headers.authorization;
+    
+    // If no token, just continue without setting user
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return next();
+    }
+    
+    const token = authHeader.split(' ')[1];
+    
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { id: string };
+    
+    // Get user from database
+    const user = await User.findById(decoded.id).select('-password');
+    
+    if (user) {
+      // Add user to request if found
+      req.user = user;
+    }
+    
+    next();
+  } catch (error) {
+    // Just proceed without authentication on any error
+    next();
   }
 };

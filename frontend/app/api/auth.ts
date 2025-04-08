@@ -7,7 +7,7 @@ export interface AuthResponse {
   refreshToken?: string;
   user?: AuthUser;
 }
-import axios from 'axios';
+import axios  from 'axios';
 import type { User as AuthUser } from './index';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
