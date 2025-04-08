@@ -98,7 +98,7 @@ export const addToPortfolio = async (req: Request, res: Response) => {
       } else {
         // Add new holding
         portfolio.holdings.push({
-          crypto: new mongoose.mongo.ObjectId(coin._id.toString()),
+          crypto: coin._id as any,  // Force TypeScript to accept it
           quantity,
           averageBuyPrice: purchasePrice,
           transactions: []
