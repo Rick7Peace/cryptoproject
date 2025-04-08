@@ -78,7 +78,18 @@ export const getCryptoDetails = async (req: Request, res: Response) => {
     // If not found or data is stale, fetch from API
     if (!crypto) {
       // Fetch detailed data from CoinGecko
-      const coinData = await fetchCoinDetails(coinId);
+      const coinData = await fetchCoinDetails(coinId) as {
+        id: string;
+        symbol: string;
+        name: string;
+        image: { large: string };
+        market_data: {
+          current_price: { usd: number };
+          market_cap: { usd: number };
+          market_cap_rank: number;
+          price_change_percentage_24h: number;
+        };
+      };
       
       // Save basic data to our database
       crypto = await Crypto.findOneAndUpdate(
@@ -193,10 +204,10 @@ export const searchCryptos = async (req: Request, res: Response): Promise<void> 
     }
     
     // If not found locally, search via CoinGecko API
-    const searchResults = await searchCoins(query);
+    const searchResults = await searchCoins(query) as { coins: Array<{ id: string; name: string; symbol: string; large?: string; thumb?: string; market_cap_rank?: number }> };
     
     // Map API results to our model format
-    const formattedResults = searchResults.coins.map((coin: any) => ({
+    const formattedResults = searchResults.coins.map((coin) => ({
       coinId: coin.id,
       name: coin.name,
       symbol: coin.symbol,
