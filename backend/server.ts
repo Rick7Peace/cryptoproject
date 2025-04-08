@@ -22,6 +22,15 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Add this route after your middleware and before other routes
+app.get('/health', (_req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Server is healthy',
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // Connect to MongoDB Atlas using the modular connection file
 connectDB()
   .then(() => {
