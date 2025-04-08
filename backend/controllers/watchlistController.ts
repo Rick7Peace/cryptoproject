@@ -3,6 +3,15 @@ import Watchlist from '../models/Watchlist';
 import Crypto from '../models/Crypto';
 import { ApiError } from '../utils/errorHandler';
 
+import User from '../models/User';
+declare global {
+  namespace Express {
+    interface Request {
+      user?: typeof User.prototype; // Or just 'any' if you prefer
+    }
+  }
+}
+
 /**
  * Get the current user's watchlist
  */

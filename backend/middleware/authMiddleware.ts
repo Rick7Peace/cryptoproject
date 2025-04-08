@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/User';
-import { ApiError } from '../utils/errorHandler.ts';
+import { ApiError } from '../utils/errorHandler';
 
 // Extend Request type to include user
 declare global {

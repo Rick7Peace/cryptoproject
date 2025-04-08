@@ -14,18 +14,18 @@ const router = express.Router();
 router.use(authenticate);
 
 // Get user's portfolio
-router.get('/', getPortfolio);
+router.get('/', getPortfolio as unknown as express.RequestHandler);
 
 // Get portfolio statistics
-router.get('/stats', getPortfolioStats);
+router.get('/stats', getPortfolioStats as unknown as express.RequestHandler);
 
 // Add coin to portfolio
-router.post('/add/:coinId', addToPortfolio);
+router.post('/add/:coinId', addToPortfolio as unknown as express.RequestHandler);
 
 // Update holding (buy more or sell)
-router.put('/update/:coinId', updateHolding);
+router.put('/update/:coinId', updateHolding as unknown as express.RequestHandler);
 
 // Remove coin from portfolio
-router.delete('/remove/:coinId', removeFromPortfolio);
+router.delete('/remove/:coinId', removeFromPortfolio as unknown as express.RequestHandler);
 
 export default router;

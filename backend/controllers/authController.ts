@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
 import User from '../models/User';
 import jwt from 'jsonwebtoken';
-import { generateTokens, verifyRefreshToken } from '../utils/jwtUtils.ts';
-import { ApiError } from '../utils/errorHandler.ts';
+import { generateTokens, verifyRefreshToken } from '../utils/jwtUtils';
+import { ApiError } from '../utils/errorHandler';
 
 export const register = async (req: Request, res: Response) => {
   try {
