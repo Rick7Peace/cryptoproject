@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "bcrypt": "^5.1.1",
     "chart.js": "^4.4.8",
     "mongodb": "^6.15.0",
     "mongoose": "^8.13.2"
