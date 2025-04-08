@@ -6,12 +6,17 @@ import authRoutes from './routes/authRoutes';
 import portfolioRoutes from './routes/portfolioRoutes';
 import cryptoRoutes from './routes/cryptoRoutes';
 import watchlistRoutes from './routes/watchlistRoutes';
+// Add this import
+import cors from 'cors';
 
 // Load environment variables
 dotenv.config();
 
 // Create Express app
 const app = express();
+
+// Add CORS middleware before your routes
+app.use(cors());
 
 // Body parsing middleware
 app.use(express.json());
