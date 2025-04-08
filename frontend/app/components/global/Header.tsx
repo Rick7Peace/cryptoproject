@@ -1,4 +1,4 @@
-import { Link } from 'react-router';
+import { Link } from 'react-router-dom'; // Change import for `react-router-dom`
 import React, { useState } from 'react';
 
 const Header: React.FC = () => {
@@ -14,8 +14,8 @@ const Header: React.FC = () => {
       
       {/* Desktop Menu */}
       <div className="hidden md:flex space-x-8 items-center">
-        <a href="#features" className="hover:text-blue-400 transition">Features</a>
-        <a href="#pricing" className="hover:text-blue-400 transition">Pricing</a>
+        <Link to="#features" className="hover:text-blue-400 transition">Features</Link> {/* Changed anchor to Link */}
+        <Link to="#pricing" className="hover:text-blue-400 transition">Pricing</Link> {/* Changed anchor to Link */}
         <Link to="/dashboard" className="hover:text-blue-400 transition">Dashboard</Link>
         <Link to="/portfolio" className="hover:text-blue-400 transition">Portfolio</Link>
         <Link to="/login" className="px-4 py-2 border border-blue-500 text-blue-500 rounded-lg hover:bg-blue-500 hover:text-white transition">Login</Link>
@@ -36,8 +36,8 @@ const Header: React.FC = () => {
       {mobileMenuOpen && (
         <div className="absolute top-16 right-0 left-0 bg-slate-900 z-50 p-4 md:hidden">
           <div className="flex flex-col space-y-4">
-            <a href="#features" className="hover:text-blue-400 transition">Features</a>
-            <a href="#pricing" className="hover:text-blue-400 transition">Pricing</a>
+            <Link to="#features" className="hover:text-blue-400 transition">Features</Link> {/* Changed anchor to Link */}
+            <Link to="#pricing" className="hover:text-blue-400 transition">Pricing</Link> {/* Changed anchor to Link */}
             <Link to="/dashboard" className="hover:text-blue-400 transition">Dashboard</Link>
             <Link to="/portfolio" className="hover:text-blue-400 transition">Portfolio</Link>
             <Link to="/login" className="px-4 py-2 border border-blue-500 text-blue-500 rounded-lg hover:bg-blue-500 hover:text-white transition text-center">Login</Link>
