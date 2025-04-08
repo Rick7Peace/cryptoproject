@@ -7,8 +7,10 @@ import portfolioRoutes from './routes/portfolioRoutes';
 import cryptoRoutes from './routes/cryptoRoutes';
 import watchlistRoutes from './routes/watchlistRoutes';
 
+// Load environment variables
 dotenv.config();
 
+// Create Express app
 const app = express();
 
 // Body parsing middleware
@@ -34,5 +36,8 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
+// Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// Don't export the app - this is a common source of circular dependencies
