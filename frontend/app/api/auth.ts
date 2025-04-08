@@ -1,4 +1,3 @@
-import type { User } from '../types/auth';
 
 // Define types for authorization
 export interface Permission {
