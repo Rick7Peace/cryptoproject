@@ -36,12 +36,12 @@ connectDB()
       
       app.use(express.static(staticPath));
       
-      app.get('*', (req, res) => {
+      app.get('*', (_req, res) => {
         res.sendFile(path.resolve(__dirname, '../client', 'build', 'index.html'));
       });
     } else {
       // Development mode: API status endpoint
-      app.get('/', (req, res) => {
+      app.get('/', (_req, res) => {
         res.json({ 
           status: 'API is running', 
           mode: process.env.NODE_ENV || 'development',
