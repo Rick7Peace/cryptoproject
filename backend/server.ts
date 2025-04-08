@@ -1,7 +1,7 @@
 import express from 'express';
-import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import path from 'path';
+import connectDB from './config/connection';
 import authRoutes from './routes/authRoutes';
 import portfolioRoutes from './routes/portfolioRoutes';
 import cryptoRoutes from './routes/cryptoRoutes';
@@ -15,29 +15,62 @@ const app = express();
 
 // Body parsing middleware
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Connect to MongoDB
-mongoose
-  .connect(process.env.MONGODB_URI as string)
-  .then(() => console.log('MongoDB connected'))
-  .catch((error) => console.log('MongoDB connection error:', error));
-
-// API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/portfolio', portfolioRoutes);
-app.use('/api/crypto', cryptoRoutes);
-app.use('/api/watchlist', watchlistRoutes);
-
-// Serve static files in production
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../client/build')));
-  app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../client', 'build', 'index.html'));
+// Connect to MongoDB Atlas using the modular connection file
+connectDB()
+  .then(() => {
+    console.log('MongoDB Atlas connection established successfully');
+    
+    // API Routes
+    app.use('/api/auth', authRoutes);
+    app.use('/api/portfolio', portfolioRoutes);
+    app.use('/api/crypto', cryptoRoutes);
+    app.use('/api/watchlist', watchlistRoutes);
+    
+    // Static File Serving Configuration
+    if (process.env.NODE_ENV === 'production') {
+      // Production mode: Serve from client/build
+      const staticPath = path.join(__dirname, '../client/build');
+      console.log(`Serving static files from: ${staticPath}`);
+      
+      app.use(express.static(staticPath));
+      
+      app.get('*', (req, res) => {
+        res.sendFile(path.resolve(__dirname, '../client', 'build', 'index.html'));
+      });
+    } else {
+      // Development mode: API status endpoint
+      app.get('/', (req, res) => {
+        res.json({ 
+          status: 'API is running', 
+          mode: process.env.NODE_ENV || 'development',
+          mongodb: 'connected'
+        });
+      });
+      
+      // Uncomment below to serve static files in development
+      // const devStaticPath = path.join(__dirname, '../client/public');
+      // console.log(`Serving development static files from: ${devStaticPath}`);
+      // app.use(express.static(devStaticPath));
+    }
+    
+    // Start server
+    const PORT = process.env.PORT || 5000;
+    const server = app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
+      console.log(`http://localhost:${PORT}`);
+    });
+    
+    // Handle server shutdown gracefully
+    process.on('SIGINT', () => {
+      server.close(() => {
+        console.log('Server closed. Database connections cleaned.');
+        process.exit(0);
+      });
+    });
+  })
+  .catch((error) => {
+    console.error('Failed to connect to MongoDB Atlas:', error);
+    process.exit(1);
   });
-}
-
-// Start server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
-// Don't export the app - this is a common source of circular dependencies
