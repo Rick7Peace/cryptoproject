@@ -21,11 +21,24 @@ const portfolioEntrySchema: Schema = new Schema({
   transactions: [{ type: Schema.Types.ObjectId, ref: 'Transaction' }],
 });
 
-const portfolioSchema: Schema = new Schema({
-  user: { type: Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
-  holdings: [portfolioEntrySchema],
-  totalValue: { type: Number, default: 0 },
-  lastUpdated: { type: Date, default: Date.now },
+const portfolioSchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  holdings: [{
+    crypto: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Crypto',
+      required: true
+    },
+    quantity: Number,
+    averageBuyPrice: Number,
+    transactions: Array
+  }],
+  totalValue: Number,
+  lastUpdated: Date
 });
 
 const Portfolio = mongoose.model<IPortfolio>('Portfolio', portfolioSchema);

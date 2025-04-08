@@ -1,12 +1,11 @@
-
 import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import { graphqlHTTP } from 'express-graphql';
 import path from 'path';
 import authRoutes from './routes/authRoutes';
 import portfolioRoutes from './routes/portfolioRoutes';
-
+import cryptoRoutes from './routes/cryptoRoutes';
+import watchlistRoutes from './routes/watchlistRoutes';
 
 dotenv.config();
 
@@ -21,15 +20,17 @@ mongoose
   .then(() => console.log('MongoDB connected'))
   .catch((error) => console.log('MongoDB connection error:', error));
 
-
-
+// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/portfolio', portfolioRoutes);
+app.use('/api/crypto', cryptoRoutes);
+app.use('/api/watchlist', watchlistRoutes);
 
+// Serve static files in production
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, 'client/build')));
+  app.use(express.static(path.join(__dirname, '../client/build')));
   app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, 'client', 'build', 'index.html'));
+    res.sendFile(path.resolve(__dirname, '../client', 'build', 'index.html'));
   });
 }
 
