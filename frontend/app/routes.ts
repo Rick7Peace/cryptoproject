@@ -9,7 +9,7 @@ export default [
   route("unauthorized", "routes/Unauthorized.tsx"),
   
   // Protected routes - will be wrapped in ProtectedRoute component
-  route("dashboard", "routes/dashboard.tsx"),
-  route("portfolio", "routes/portfolio.tsx")
+  // route("dashboard", "routes/dashboard.tsx"),
+  // route("explore", "routes/explore.tsx") // Add this line
 
 ]satisfies RouteConfig;

@@ -11,9 +11,9 @@ router.use(authenticate);
 router.get('/', getWatchlist);
 
 // Add coin to watchlist
-router.post('/add/:coinId', addToWatchlist);
+router.post('/:coinId', addToWatchlist);
 
 // Remove coin from watchlist
-router.delete('/remove/:coinId', removeFromWatchlist);
+router.delete('/:coinId', removeFromWatchlist);
 
 export default router;

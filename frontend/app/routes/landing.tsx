@@ -2,8 +2,8 @@ import type { Route } from "./+types/landing";
 import Header from '../components/global/Header';
 import LandingHero from '../components/landing/landingHero';
 import Features from '../components/landing/features';
-import CTA from '../components/landing/CTA';
 import Footer from '../components/global/Footer';
+import CallToAction from "../components/landing/CallToAction";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -18,7 +18,7 @@ export default function Landing() {
       <Header />
       <LandingHero />
       <Features />
-      <CTA />
+      <CallToAction />
       <Footer />
     </div>
   );

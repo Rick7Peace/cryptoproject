@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // API base URL - adjust based on your environment
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // Types
 export interface Crypto {
@@ -142,23 +142,13 @@ export const searchCryptos = async (query: string): Promise<Crypto[]> => {
 /**
  * Get current prices for specified cryptocurrencies
  */
-export const getCryptoPrices = async (coinIds: string[]): Promise<PriceData> => {
+export const getCryptoPrices = async (coinIds: string[]): Promise<Record<string, any>> => {
   try {
-    if (!coinIds.length) {
-      return {};
-    }
-    
-    const response = await axios.get(`${API_BASE_URL}/crypto/prices`, {
-      params: { ids: coinIds.join(',') }
-    });
-    
-    if (!response.data.success) {
-      throw new Error(response.data.message || 'Failed to fetch prices');
-    }
-    
-    return response.data.data;
+    const idsParam = coinIds.join(',');
+    const response = await axios.get(`${API_BASE_URL}/crypto/prices?ids=${idsParam}`);
+    return response.data.data || {};
   } catch (error) {
-    console.error('Error fetching cryptocurrency prices:', error);
+    console.error('Error fetching crypto prices:', error);
     throw error;
   }
 };

@@ -5,9 +5,9 @@ interface ICrypto extends Document {
   symbol: string;         // BTC, ETH, etc.
   name: string;           // Bitcoin, Ethereum, etc.
   image: string;          // URL to the coin's icon
-  currentPrice: number;   // Current price in USD
-  marketCap: number;      // Market cap in USD
-  marketCapRank: number;  // Rank by market cap
+  currentPrice?: number;   // Current price in USD
+  marketCap?: number;      // Market cap in USD
+  marketCapRank?: number;  // Rank by market cap
   priceChangePercentage24h: number;  // 24h price change percentage
   lastUpdated: Date;      // When the data was last fetched
 }
@@ -27,6 +27,7 @@ const cryptoSchema: Schema = new Schema({
 // Indexes for faster lookups
 //cryptoSchema.index({ coinId: 1 });
 cryptoSchema.index({ symbol: 1 });
+cryptoSchema.index({ marketCapRank: 1 });
 
 const Crypto = mongoose.model<ICrypto>('Crypto', cryptoSchema);
 

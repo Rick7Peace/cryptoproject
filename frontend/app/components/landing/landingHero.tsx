@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router';
+import { Link } from 'react-router-dom';
 
 // Sample trending coins data - would be fetched from API in production
 const trendingCoins = [

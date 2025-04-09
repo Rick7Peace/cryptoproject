@@ -16,7 +16,12 @@ dotenv.config();
 const app = express();
 
 // Add CORS middleware before your routes
-app.use(cors());
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? 'https://your-production-frontend-domain.com' 
+    : 'http://localhost:5173',
+  credentials: true
+}));
 
 // Body parsing middleware
 app.use(express.json());
@@ -31,6 +36,7 @@ app.get('/health', (_req, res) => {
   });
 });
 
+
 // Connect to MongoDB Atlas using the modular connection file
 connectDB()
   .then(() => {
@@ -41,6 +47,9 @@ connectDB()
     app.use('/api/portfolio', portfolioRoutes);
     app.use('/api/crypto', cryptoRoutes);
     app.use('/api/watchlist', watchlistRoutes);
+
+
+
     
     // Static File Serving Configuration
     if (process.env.NODE_ENV === 'production') {
@@ -68,6 +77,10 @@ connectDB()
       // console.log(`Serving development static files from: ${devStaticPath}`);
       // app.use(express.static(devStaticPath));
     }
+
+
+
+
     
     // Start server
     const PORT = process.env.PORT || 5000;
