@@ -112,16 +112,23 @@ export const refreshToken = async (req: Request, res: Response) => {
     }
     
     // Verify the refresh token
-    const decoded = verifyRefreshToken(token);
+    let decoded;
+    try {
+decoded = verifyRefreshToken(token);
+    } catch (error) {
+      console.error('Refresh token verification failed:', error);
+      throw new ApiError('Invalid refresh token', 401);
+    }
     
-    // Find user with this refresh token
-    const user = await User.findOne({ 
-      _id: decoded.id,
-      refreshToken: token 
-    });
+    if (!decoded || !decoded.id) {
+      throw new ApiError('Invalid refresh token format', 401);
+    }
+    
+    // First find user by ID
+    const user = await User.findById(decoded.id);
     
     if (!user) {
-      throw new ApiError('Invalid refresh token', 401);
+      throw new ApiError('User not found', 401);
     }
     
     // Generate new tokens
@@ -142,6 +149,7 @@ export const refreshToken = async (req: Request, res: Response) => {
         message: error.message,
       });
     } else {
+console.error('Error refreshing token:', error);
       res.status(500).json({
         success: false,
         message: 'Error refreshing token',

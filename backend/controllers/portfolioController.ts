@@ -151,15 +151,15 @@ export const updateHolding = async (req: AuthenticatedRequest, res: Response) =>
   try {
     const userId = req.user.id;
     const { coinId } = req.params;
-    const { quantity, operation } = req.body;
+    const { quantity, purchasePrice } = req.body;
 
     // Validate inputs
     if (!quantity || quantity <= 0) {
       throw new ApiError('Quantity must be greater than 0', 400);
     }
 
-    if (!operation || !['buy', 'sell'].includes(operation)) {
-      throw new ApiError('Operation must be either "buy" or "sell"', 400);
+    if (!purchasePrice || purchasePrice <= 0) {
+      throw new ApiError('Purchase price must be greater than 0', 400);
     }
 
     // Check if coin exists
@@ -183,24 +183,9 @@ export const updateHolding = async (req: AuthenticatedRequest, res: Response) =>
       throw new ApiError('This cryptocurrency is not in your portfolio', 404);
     }
 
-    const holding = portfolio.holdings[holdingIndex];
-
-    if (operation === 'sell') {
-      // Check if user has enough to sell
-      if (holding.quantity < quantity) {
-        throw new ApiError('Insufficient holding to sell', 400);
-      }
-
-      // Update quantity
-      holding.quantity -= quantity;
-
-      // Remove holding if quantity becomes zero
-      if (holding.quantity === 0) {
-        portfolio.holdings.splice(holdingIndex, 1);
-      }
-    } else { // Buy operation
-      holding.quantity += quantity;
-    }
+    // Update holding with new values
+    portfolio.holdings[holdingIndex].quantity = quantity;
+    portfolio.holdings[holdingIndex].averageBuyPrice = purchasePrice;
 
     // Update total portfolio value
     portfolio.totalValue = portfolio.holdings.reduce((total, holding) => {
@@ -219,7 +204,7 @@ export const updateHolding = async (req: AuthenticatedRequest, res: Response) =>
 
     res.status(200).json({
       success: true,
-      message: `Successfully ${operation === 'buy' ? 'bought' : 'sold'} cryptocurrency`,
+      message: `Holdings updated for ${coin.name}`,
       data: updatedPortfolio,
     });
   } catch (error) {

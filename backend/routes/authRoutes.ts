@@ -16,11 +16,8 @@ router.post('/register', register);
 router.post('/login', login);
 router.post('/refresh-token', refreshToken);
 
-// Protected routes
-router.use('/logout', authenticate);
-router.post('/logout', logout);
-
-// Add this validation endpoint
+// Protected routes - apply middleware directly to routes
+router.post('/logout', authenticate, logout);
 router.get('/validate', authenticate, validateToken);
 
 export default router;

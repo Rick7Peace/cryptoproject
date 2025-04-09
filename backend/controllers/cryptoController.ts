@@ -180,12 +180,13 @@ export const getCryptoHistory = async (req: Request, res: Response) => {
  */
 export const searchCryptos = async (req: Request, res: Response): Promise<void> => {
   try {
-    const query = req.query.q as string;
-    
+    // Correctly access the query parameter
+    const query = req.query.query as string; // Changed from `req.query.q` to `req.query.query`
+
     if (!query || query.length < 2) {
       throw new ApiError('Search query must be at least 2 characters', 400);
     }
-    
+
     // First try to search in our database
     const localResults = await Crypto.find({
       $or: [
@@ -193,7 +194,7 @@ export const searchCryptos = async (req: Request, res: Response): Promise<void> 
         { symbol: { $regex: query, $options: 'i' } }
       ]
     }).limit(20);
-    
+
     if (localResults.length > 0) {
       res.status(200).json({
         success: true,
@@ -202,10 +203,19 @@ export const searchCryptos = async (req: Request, res: Response): Promise<void> 
       });
       return;
     }
-    
+
     // If not found locally, search via CoinGecko API
-    const searchResults = await searchCoins(query) as { coins: Array<{ id: string; name: string; symbol: string; large?: string; thumb?: string; market_cap_rank?: number }> };
-    
+    const searchResults = await searchCoins(query) as {
+      coins: Array<{
+        id: string;
+        name: string;
+        symbol: string;
+        large?: string;
+        thumb?: string;
+        market_cap_rank?: number;
+      }>;
+    };
+
     // Map API results to our model format
     const formattedResults = searchResults.coins.map((coin) => ({
       coinId: coin.id,
@@ -214,7 +224,7 @@ export const searchCryptos = async (req: Request, res: Response): Promise<void> 
       image: coin.large || coin.thumb,
       marketCapRank: coin.market_cap_rank || 0
     }));
-    
+
     res.status(200).json({
       success: true,
       data: formattedResults,
