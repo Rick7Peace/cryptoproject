@@ -6,7 +6,7 @@ export default [
   index("routes/landing.tsx"),
   route("login", "routes/Login.tsx"),
   route("register", "routes/Register.tsx"),
-  route("unauthorized", "routes/Unauthorized.tsx"),
+  route("unauthorized", "routes/unauthorized.tsx"),
   
   // Protected routes - will be wrapped in ProtectedRoute component
   route("dashboard", "routes/dashboard.tsx")
