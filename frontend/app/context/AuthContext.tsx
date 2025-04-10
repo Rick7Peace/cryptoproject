@@ -5,6 +5,7 @@ import type {
   LoginCredentials, 
   RegisterData 
 } from '../types/authTypes';
+import storageService from '../services/storageService';
 
 // Define your context types
 interface AuthContextType {
@@ -23,42 +24,151 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Initialize state from storage service instead of direct localStorage access
+  const { accessToken, user } = storageService.getAuthData();
+  
   const [state, setState] = useState({
-    user: null as User | null,
-    isAuthenticated: false,
+    user: user as User | null,
+    isAuthenticated: !!accessToken,
     isLoading: true,
     error: null as string | null,
-    token: null as string | null
+    token: accessToken
   });
 
   // Check authentication status on load
   useEffect(() => {
     const checkAuth = async () => {
+      console.log("Checking authentication on app load...");
       try {
+        // Get token from storage service
+        const { accessToken } = storageService.getAuthData();
+        console.log("Token from storage:", accessToken ? "exists" : "not found");
+        
         const authResult = await authService.authenticateWithRefresh();
+        console.log("Auth result:", authResult ? "authenticated" : "not authenticated");
+        
         if (authResult) {
+          console.log("Setting authenticated state");
           setState({
             user: authResult.user,
             isAuthenticated: true,
             isLoading: false,
             error: null,
-            // Fix: Use accessToken property from TokenAuthResponse
             token: authResult.accessToken || null
           });
         } else {
-          setState(prev => ({ ...prev, isLoading: false }));
+          console.log("Setting unauthenticated state");
+          setState(prev => ({ 
+            ...prev, 
+            isAuthenticated: false,
+            isLoading: false,
+            token: null
+          }));
         }
       } catch (error) {
+        console.error("Authentication check error:", error);
         setState(prev => ({
           ...prev,
+          isAuthenticated: false,
           isLoading: false,
-          error: "Authentication failed"
+          error: "Authentication failed",
+          token: null
         }));
       }
     };
 
-    checkAuth();
+    // Check if storage is available before proceeding
+    if (storageService.isStorageAvailable()) {
+      checkAuth();
+    } else {
+      console.error("LocalStorage is not available");
+      setState(prev => ({
+        ...prev, 
+        isLoading: false,
+        error: "Storage not available"
+      }));
+    }
   }, []);
+
+  // Add storage event listener for cross-tab synchronization
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'accessToken') {
+        if (event.newValue === null) {
+          // Another tab logged out
+          setState({
+            user: null,
+            isAuthenticated: false,
+            isLoading: false,
+            error: null,
+            token: null
+          });
+        } else if (event.oldValue !== event.newValue) {
+          // Another tab logged in or refreshed token
+          const { user } = storageService.getAuthData();
+          setState({
+            user,
+            isAuthenticated: true,
+            isLoading: false,
+            error: null,
+            token: event.newValue
+          });
+        }
+      }
+    };
+
+    // Add event listener
+    window.addEventListener('storage', handleStorageChange);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
+  // Add session timeout detection
+  useEffect(() => {
+    const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes in milliseconds
+    
+    if (state.isAuthenticated) {
+      const checkSessionTimeout = () => {
+        const { timestamp } = storageService.getAuthData();
+        
+        if (timestamp && Date.now() - timestamp > SESSION_TIMEOUT) {
+          console.log("Session timed out due to inactivity");
+          logout();
+        }
+      };
+      
+      // Check session timeout every minute
+      const intervalId = setInterval(checkSessionTimeout, 60000);
+      
+      // Update timestamp on user activity
+      const updateTimestamp = () => {
+        if (state.isAuthenticated) {
+          storageService.updateAuthTimestamp();
+        }
+      };
+      
+      // Listen for user activity
+      window.addEventListener('click', updateTimestamp);
+      window.addEventListener('keypress', updateTimestamp);
+      window.addEventListener('mousemove', updateTimestamp);
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          updateTimestamp();
+        }
+      });
+      
+      return () => {
+        clearInterval(intervalId);
+        window.removeEventListener('click', updateTimestamp);
+        window.removeEventListener('keypress', updateTimestamp);
+        window.removeEventListener('mousemove', updateTimestamp);
+        document.removeEventListener('visibilitychange', updateTimestamp);
+      };
+    }
+  }, [state.isAuthenticated]);
 
   // Handle login
   const login = useCallback(async (credentials: LoginCredentials) => {
@@ -133,11 +243,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setState(prev => ({ ...prev, isLoading: true }));
       const updatedUser = await authService.updateProfile(data);
+      
+      // Update both user state and storage
       setState(prev => ({
         ...prev,
         user: updatedUser,
         isLoading: false
       }));
+      
+      // Update user data in storage
+      storageService.updateUserData(updatedUser);
+      
     } catch (error) {
       setState(prev => ({
         ...prev,

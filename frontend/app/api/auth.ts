@@ -26,19 +26,20 @@ export const authorizationApi = {
       const response = await apiClient.get(`/authorization/check-permission/${permissionName}`);
       return response.data.data.hasPermission;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Failed to check permission');
+      console.error(`Permission check failed for ${permissionName}:`, error);
+      // Return false instead of throwing error to prevent unauthorized state
+      return false;
     }
   },
   
-  /**
-   * Check if user has a specific role
-   */
   hasRole: async (roleName: string): Promise<boolean> => {
     try {
       const response = await apiClient.get(`/authorization/check-role/${roleName}`);
       return response.data.data.hasRole;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Failed to check role');
+      console.error(`Role check failed for ${roleName}:`, error);
+      // Return false instead of throwing error
+      return false;
     }
   },
   

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import { validateLoginForm } from '../utils/authValidation';
@@ -61,37 +61,6 @@ export const useLoginRoute = () => {
     }
   };
 
-  // Server health check
-  useEffect(() => {
-    const testDirectFetch = async () => {
-      try {
-        console.log("Testing direct fetch to server...");
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-        
-        const response = await fetch("http://localhost:5000/health", {
-          signal: controller.signal
-        });
-        
-        clearTimeout(timeoutId);
-        const data = await response.text();
-        console.log("Direct fetch response:", data);
-        setIsServerAvailable(true);
-      } catch (error: any) {
-        console.error("Direct fetch failed:", error);
-        setIsServerAvailable(false);
-        
-        // Set appropriate error message if server is unreachable
-        if (error.name === 'AbortError') {
-          setError('Server response timeout. Please try again later.');
-        } else {
-          setError('Unable to connect to server. Please check your connection or try again later.');
-        }
-      }
-    };
-    
-    testDirectFetch();
-  }, []);
 
   return { 
     error, 

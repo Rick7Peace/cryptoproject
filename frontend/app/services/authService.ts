@@ -10,7 +10,7 @@ import type {
   RegisterData,
   TokenAuthResponse
 } from "../types/authTypes";
-
+import storageService from './storageService';
 
 
 /**
@@ -26,10 +26,13 @@ export async function validateToken(token: string): Promise<TokenAuthResponse | 
     
     if (!response.data.success || !response.data.data) return null;
     
+    // Use storage service instead of direct localStorage access
+    const { refreshToken } = storageService.getAuthData();
+    
     return {
       user: response.data.data,
       accessToken: token,
-      refreshToken: localStorage.getItem('refreshToken') || ''
+      refreshToken: refreshToken || ''
     };
   } catch (error) {
     console.error("Token validation error:", error);
@@ -57,7 +60,9 @@ export async function refreshToken(refreshToken: string): Promise<TokenResponse 
  * Complete authentication flow with token refresh
  */
 export async function authenticateWithRefresh(): Promise<TokenAuthResponse | null> {
-  const token = localStorage.getItem("accessToken");
+  // Use storage service instead of direct localStorage access
+  const { accessToken: token, refreshToken: refreshTokenValue } = storageService.getAuthData();
+  
   if (!token) return null;
   
   // Try to validate current token
@@ -65,15 +70,17 @@ export async function authenticateWithRefresh(): Promise<TokenAuthResponse | nul
   if (validationResult) return validationResult;
   
   // If token invalid, try refresh
-  const refreshTokenValue = localStorage.getItem("refreshToken");
   if (!refreshTokenValue) return null;
   
   const refreshResult = await refreshToken(refreshTokenValue);
   if (!refreshResult) return null;
   
-  // Store new tokens
-  localStorage.setItem("accessToken", refreshResult.accessToken);
-  localStorage.setItem("refreshToken", refreshResult.refreshToken);
+  // Store new tokens using storage service
+  storageService.setAuthData(
+    refreshResult.accessToken,
+    refreshResult.refreshToken,
+    storageService.getAuthData().user
+  );
   
   // Validate the new token
   return await validateToken(refreshResult.accessToken);
@@ -155,9 +162,12 @@ const authService = {
         throw new Error('Login successful but response format is invalid');
       }
       
-      // Store tokens in localStorage
-      localStorage.setItem('accessToken', responseData.accessToken);
-      localStorage.setItem('refreshToken', responseData.refreshToken);
+      // Use centralized storage service
+      storageService.setAuthData(
+        responseData.accessToken,
+        responseData.refreshToken,
+        responseData.user
+      );
       
       return {
         user: responseData.user,
@@ -184,14 +194,13 @@ const authService = {
    */
   logout: async (): Promise<void> => {
     try {
-      const refreshToken = localStorage.getItem('refreshToken');
+      const { refreshToken } = storageService.getAuthData();
       if (refreshToken) {
         await apiClient.post<ApiResponse<void>>('/auth/logout', { refreshToken });
       }
     } finally {
-      // Always clear localStorage on logout
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
+      // Use centralized storage service
+      storageService.clearAuthData();
     }
   },
   
