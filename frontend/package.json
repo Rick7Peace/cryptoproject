@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "prebuild": "npm i rollup@latest --no-save --no-optional",
+    "prebuild": "npm i rollup@3.29.4 --no-save --force && npm i @rollup/rollup-linux-x64-gnu@3.29.4 --no-save --force --no-optional || echo 'Platform-specific rollup binary not installed - using JS fallback'",
     "build": "react-router build",
     "postbuild": "node -e \"require('fs').copyFileSync('public/_redirects', 'build/client/_redirects')\"",
     "dev": "react-router dev",
@@ -31,5 +31,8 @@
     "typescript": "^5.7.2",
     "vite": "^5.4.11",
     "vite-tsconfig-paths": "^5.1.4"
+  },
+  "overrides": {
+    "rollup": "3.29.4"
   }
 }
