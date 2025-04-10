@@ -8,6 +8,7 @@
     "strict": true,
     "skipLibCheck": true,
     "typeRoots": ["./node_modules/@types"],
+    "types": ["node", "express", "jsonwebtoken", "cors"]
   },
   "include": ["**/*.ts"],
   "exclude": ["node_modules", "dist"]
