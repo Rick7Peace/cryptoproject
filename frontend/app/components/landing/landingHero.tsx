@@ -15,16 +15,16 @@ const LandingHero: React.FC = () => {
 
   // Keep track of previous prices for transition effects
   const prevPricesRef = useRef<Record<string, number>>({});
-  
+
   // Memoize updatePrices to prevent unnecessary recreations
   const updatePrices = useCallback(async (coins = trendingCoins) => {
     if (coins.length === 0) return;
-    
+
     setIsRefreshing(true);
     try {
       const coinIds = coins.map(coin => coin.coinId);
       const priceData = await getCryptoPrices(coinIds);
-      
+
       // Store current prices for transition effects
       const newPrevPrices: Record<string, number> = {};
       coins.forEach(coin => {
@@ -33,7 +33,7 @@ const LandingHero: React.FC = () => {
         }
       });
       prevPricesRef.current = newPrevPrices;
-      
+
       // Update each coin with its latest price data
       const updatedCoins = coins.map(coin => {
         const price = priceData[coin.coinId];
@@ -46,7 +46,7 @@ const LandingHero: React.FC = () => {
         }
         return coin;
       });
-      
+
       setTrendingCoins(updatedCoins);
       setCurrentTime(new Date());
     } catch (err) {
@@ -62,11 +62,11 @@ const LandingHero: React.FC = () => {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const response = await getTopCryptos(4); // Get top 4 trending coins
       setTrendingCoins(response);
       setDisplayCoins(response); // Set initial display coins
-      
+
       // Now fetch their current prices
       await updatePrices(response);
     } catch (err) {
@@ -87,7 +87,7 @@ const LandingHero: React.FC = () => {
     const interval = setInterval(() => {
       updatePrices();
     }, refreshInterval * 1000);
-    
+
     // Cleanup on unmount
     return () => clearInterval(interval);
   }, [refreshInterval, updatePrices]);
@@ -95,12 +95,12 @@ const LandingHero: React.FC = () => {
   // Visual buffer - smooth transition for price updates
   useEffect(() => {
     if (trendingCoins.length === 0) return;
-    
+
     // Use setTimeout to create a visual delay before updating displayed prices
     const timer = setTimeout(() => {
       setDisplayCoins(trendingCoins);
     }, 300); // 300ms delay helps with visual transition
-    
+
     return () => clearTimeout(timer);
   }, [trendingCoins]);
 
@@ -113,7 +113,7 @@ const LandingHero: React.FC = () => {
   const getPriceChangeClass = (coin: Crypto) => {
     const prevPrice = prevPricesRef.current[coin.coinId];
     if (!prevPrice || !coin.currentPrice) return "";
-    
+
     if (coin.currentPrice > prevPrice) {
       return "animate-price-increase";
     } else if (coin.currentPrice < prevPrice) {
@@ -157,11 +157,11 @@ const LandingHero: React.FC = () => {
                 </span>
               </div>
             </div>
-            
+
             {error && (
               <ErrorAlert error={error} onDismiss={() => setError(null)} />
             )}
-            
+
             {isLoading && displayCoins.length === 0 ? (
               <div className="flex justify-center py-10">
                 <div className="animate-pulse flex space-x-2 items-center">
@@ -203,7 +203,7 @@ const LandingHero: React.FC = () => {
                 ))}
               </div>
             )}
-            
+
             {/* Refresh rate controls */}
             <div className="mt-6 flex justify-end items-center space-x-2">
               <span className="text-xs text-gray-400">Refresh rate:</span>
