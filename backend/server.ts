@@ -17,7 +17,7 @@ const app = express();
 // Add CORS middleware before your routes
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? 'https://your-production-frontend-domain.com' 
+    ? 'https://cryptotrack-oitv.onrender.com' 
     : 'http://localhost:5173',
   credentials: true
 }));
