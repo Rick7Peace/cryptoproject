@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Crypto } from '~/types/cryptoTypes';
-import { searchCryptos } from '~/services/cryptoService';
+import apiClient from '~/api/apiClient';
 
 export function useCryptoSearch() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -14,8 +14,17 @@ export function useCryptoSearch() {
     try {
       setIsSearching(true);
       setSearchError(null);
-      const results = await searchCryptos(searchTerm);
-      setSearchResults(results);
+      
+      // This API call connects to your backend, which queries the database
+      const response = await apiClient.get('/crypto/search', {
+        params: { query: searchTerm }
+      });
+      
+      if (response.data.success) {
+        setSearchResults(response.data.data);
+      } else {
+        throw new Error(response.data.message || 'Search failed');
+      }
     } catch (err) {
       console.error('Search error:', err);
       setSearchError('Failed to search for cryptocurrencies');
