@@ -7,6 +7,9 @@ import { CryptoItem } from './watchlist/CryptoItem';
 import { EmptyState } from './watchlist/EmptyState';
 import { LoadingState } from './watchlist/LoadingState';
 
+// Import CSS module
+import styles from '~/styles/watchlistCryptoList.module.css';
+
 interface WatchlistCryptoListProps {
   cryptos: Crypto[];
   onRemove: (coinId: string) => void;
@@ -111,9 +114,9 @@ const WatchlistCryptoList: React.FC<WatchlistCryptoListProps> = ({
         isLoading={isLoading || isAddingCrypto}
       />
 
-      <div className="relative" key={`watchlist-${forceUpdate}`}>
-        <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg blur opacity-30"></div>
-        <div className="relative bg-slate-800 shadow overflow-hidden sm:rounded-lg p-4">
+      <div className={styles.container} key={`watchlist-${forceUpdate}`}>
+        <div className={styles.glowEffect}></div>
+        <div className={styles.card}>
           {isLoading && localCryptos.length === 0 ? (
             <LoadingState />
           ) : (
@@ -121,7 +124,7 @@ const WatchlistCryptoList: React.FC<WatchlistCryptoListProps> = ({
               {localCryptos.length === 0 && !isLoading ? (
                 <EmptyState onAddCrypto={onAddCrypto} />
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className={styles.cryptoGrid}>
                   {localCryptos.map((crypto) => {
                     const id = crypto.coinId || crypto._id || '';
                     const isNew = newlyAddedIds.has(id);
@@ -132,6 +135,7 @@ const WatchlistCryptoList: React.FC<WatchlistCryptoListProps> = ({
                         isRemoving={removingIds.has(crypto.coinId)}
                         isNew={isNew}
                         onRemove={() => handleRemove(crypto.coinId)}
+                        className={isNew ? styles.newItem : removingIds.has(crypto.coinId) ? styles.removingItem : ''}
                       />
                     );
                   })}
