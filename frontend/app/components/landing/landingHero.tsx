@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { getTopCryptos, getCryptoPrices } from '~/services/cryptoService';
 import type { Crypto } from '~/types/cryptoTypes';
 import ErrorAlert from '~/components/dashboard/ErrorAlert';
