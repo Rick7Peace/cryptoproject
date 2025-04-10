@@ -56,7 +56,8 @@ Crypto Portfolio Tracker provides investors with a comprehensive platform to man
 
 ## 🖼️ Screenshots
 
-*[Consider adding 3-4 screenshots showing the main interfaces of your application here]*
+![Dashboard View](frontend\public\images\image.png)
+
 
 ## 🚀 Getting Started
 
