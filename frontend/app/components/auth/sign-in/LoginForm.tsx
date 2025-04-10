@@ -58,11 +58,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSubmit }) => {
     if (!validateForm()) return;
     
     try {
-      await login({
-        
-        email: formData.email, 
-        password: formData.password});
-      navigate('/dashboard'); // Redirect to dashboard after successful login
+      // Use the onSubmit prop instead of directly accessing context
+      await onSubmit(formData.email, formData.password);
+      // No need to navigate here, the LoginRoute component will handle it
     } catch (error) {
       console.error('Login error:', error);
     }

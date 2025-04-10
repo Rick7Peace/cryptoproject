@@ -4,6 +4,8 @@
 import apiClient from "../api/apiClient";
 import type { ApiResponse } from "../api/apiClient";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 // Extended user interface with more fields
 export interface User {
   _id: string;
@@ -126,27 +128,56 @@ const authService = {
   authenticateWithRefresh,
   
   /**
-   * Register a new user
-   */
+ * Register a new user
+ */
   register: async (userData: RegisterData): Promise<TokenAuthResponse> => {
-    const response = await apiClient.post<ApiResponse<TokenAuthResponse>>('/auth/register', userData);
+    // Remove confirmPassword before sending to backend
+    const { confirmPassword, ...apiData } = userData;
+    console.log('Sending registration data:', apiData);
     
-    if (!response.data.success || !response.data.data) {
-      throw new Error(response.data.message || 'Registration failed');
+    try {
+      const response = await apiClient.post<ApiResponse<TokenAuthResponse>>('/auth/register', apiData);
+      
+      if (!response.data.success || !response.data.data) {
+        throw new Error(response.data.message || 'Registration failed');
+      }
+      
+      // Store tokens in localStorage
+      const { accessToken, refreshToken } = response.data.data;
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+      
+      return response.data.data;
+    } catch (error: any) {
+      console.error('Full error object:', error);
+      console.error('Response status:', error.response?.status);
+      console.error('Response headers:', error.response?.headers);
+      console.error('Response data:', error.response?.data);
+      
+      // More specific error handling
+      const errorMessage = 
+        error.response?.data?.message || 
+        error.response?.data?.error ||
+        error.response?.statusText ||
+        error.message ||
+        'Registration failed';
+        
+      throw new Error(errorMessage);
     }
-    
-    // Store tokens in localStorage
-    const { accessToken, refreshToken } = response.data.data; // Removed unnecessary ! assertion
-    localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('refreshToken', refreshToken);
-    
-    return response.data.data; // Removed unnecessary ! assertion
   },
   
   /**
-   * Log in a user with email and password
-   */
-  login: async (credentials: LoginCredentials): Promise<TokenAuthResponse> => {
+ * Log in a user with email and password
+ */
+login: async (credentials: LoginCredentials): Promise<TokenAuthResponse> => {
+  console.log('Login request URL:', `${API_BASE_URL}/auth/login`);
+console.log('Frontend origin:', window.location.origin);
+  try {
+    console.log('Attempting login with:', {
+      email: credentials.email,
+      password: credentials.password ? '********' : 'missing'
+    });
+
     const response = await apiClient.post<ApiResponse<TokenAuthResponse>>('/auth/login', credentials);
     
     if (!response.data.success || !response.data.data) {
@@ -154,12 +185,28 @@ const authService = {
     }
     
     // Store tokens in localStorage
-    const { accessToken, refreshToken } = response.data.data; // Removed unnecessary ! assertion
+    const { accessToken, refreshToken } = response.data.data;
     localStorage.setItem('accessToken', accessToken);
     localStorage.setItem('refreshToken', refreshToken);
     
-    return response.data.data; // Removed unnecessary ! assertion
-  },
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Full login error object:', error);
+    console.error('Response status:', error.response?.status);
+    console.error('Response headers:', error.response?.headers);
+    console.error('Response data:', error.response?.data);
+    
+    // More specific error handling
+    const errorMessage = 
+      error.response?.data?.message || 
+      error.response?.data?.error ||
+      error.response?.statusText ||
+      error.message ||
+      'Login failed';
+      
+    throw new Error(errorMessage);
+  }
+},
   
   /**
    * Log out the current user
@@ -185,7 +232,7 @@ const authService = {
       const token = localStorage.getItem('accessToken');
       if (!token) return null; // Add return statement here
       
-      const response = await apiClient.get<ApiResponse<User>>('/auth/me');
+      const response = await apiClient.get<ApiResponse<User>>('/auth/validate');
       if (!response.data.success || !response.data.data) return null;
       
       return response.data.data;

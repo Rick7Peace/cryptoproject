@@ -1,13 +1,7 @@
-
-import axios  from 'axios';
 import type { User as AuthUser } from './index';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+import apiClient from './apiClient';
 
 // Define types for authorization
-
-
-
 export interface AuthResponse {
   success: boolean;
   message: string;
@@ -34,8 +28,6 @@ export interface UserPermissions {
   permissions: Permission[];
 }
 
-const API_URL = '/api/authorization';
-
 /**
  * Authorization API service
  */
@@ -43,108 +35,70 @@ export const authorizationApi = {
   /**
    * Get all permissions for the current user
    */
-  getUserPermissions: async (token: string): Promise<UserPermissions> => {
-    const response = await fetch(`${API_URL}/permissions`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    
-    const data = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(data.message || 'Failed to fetch user permissions');
+  getUserPermissions: async (): Promise<UserPermissions> => {
+    try {
+      const response = await apiClient.get('/authorization/permissions');
+      return response.data.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Failed to fetch user permissions');
     }
-    
-    return data;
   },
   
   /**
    * Check if user has a specific permission
    */
-  hasPermission: async (token: string, permissionName: string): Promise<boolean> => {
-    const response = await fetch(`${API_URL}/check-permission/${permissionName}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    
-    const data = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(data.message || 'Failed to check permission');
+  hasPermission: async (permissionName: string): Promise<boolean> => {
+    try {
+      const response = await apiClient.get(`/authorization/check-permission/${permissionName}`);
+      return response.data.data.hasPermission;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Failed to check permission');
     }
-    
-    return data.hasPermission;
   },
   
   /**
    * Check if user has a specific role
    */
-  hasRole: async (token: string, roleName: string): Promise<boolean> => {
-    const response = await fetch(`${API_URL}/check-role/${roleName}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    
-    const data = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(data.message || 'Failed to check role');
+  hasRole: async (roleName: string): Promise<boolean> => {
+    try {
+      const response = await apiClient.get(`/authorization/check-role/${roleName}`);
+      return response.data.data.hasRole;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Failed to check role');
     }
-    
-    return data.hasRole;
   },
   
   /**
    * Get all available roles in the system
    */
-  getAllRoles: async (token: string): Promise<Role[]> => {
-    const response = await fetch(`${API_URL}/roles`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    
-    const data = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(data.message || 'Failed to fetch roles');
+  getAllRoles: async (): Promise<Role[]> => {
+    try {
+      const response = await apiClient.get('/authorization/roles');
+      return response.data.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Failed to fetch roles');
     }
-    
-    return data;
   },
   
   /**
    * Assign role to a user
    */
-  assignRole: async (token: string, userId: string, roleId: string): Promise<void> => {
-    const response = await fetch(`${API_URL}/assign-role`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}` 
-      },
-      body: JSON.stringify({ userId, roleId }),
-    });
-    
-    const data = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(data.message || 'Failed to assign role');
+  assignRole: async (userId: string, roleId: string): Promise<void> => {
+    try {
+      await apiClient.post('/authorization/assign-role', { userId, roleId });
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Failed to assign role');
     }
   },
   
   /**
    * Remove role from a user
    */
-  removeRole: async (token: string, userId: string, roleId: string): Promise<void> => {
-    const response = await fetch(`${API_URL}/remove-role`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}` 
-      },
-      body: JSON.stringify({ userId, roleId }),
-    });
-    
-    const data = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(data.message || 'Failed to remove role');
+  removeRole: async (userId: string, roleId: string): Promise<void> => {
+    try {
+      await apiClient.post('/authorization/remove-role', { userId, roleId });
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Failed to remove role');
     }
   }
 };
@@ -162,9 +116,11 @@ const authApi = {
     password: string;
   }): Promise<AuthResponse> => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/register`, userData);
+      console.log('Sending registration data:', userData);
+      const response = await apiClient.post('/auth/register', userData);
       return response.data;
     } catch (error: any) {
+      console.error('Registration error details:', error.response?.data);
       throw new Error(error.response?.data?.message || 'Registration failed');
     }
   },
@@ -177,7 +133,7 @@ const authApi = {
     password: string;
   }): Promise<AuthResponse> => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/login`, credentials);
+      const response = await apiClient.post('/auth/login', credentials);
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Login failed');
@@ -192,7 +148,8 @@ const authApi = {
     refreshToken: string;
   }> => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/refresh-token`, {
+      // Don't use apiClient here to avoid infinite loop with interceptor
+      const response = await apiClient.post('/auth/refresh-token', {
         refreshToken: token
       });
       return response.data;
@@ -204,17 +161,9 @@ const authApi = {
   /**
    * Log out a user
    */
-  logout: async (token: string): Promise<{ success: boolean }> => {
+  logout: async (): Promise<{ success: boolean }> => {
     try {
-      const response = await axios.post(
-        `${API_BASE_URL}/auth/logout`, 
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+      const response = await apiClient.post('/auth/logout', {});
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Logout failed');
@@ -224,16 +173,9 @@ const authApi = {
   /**
    * Get current user profile
    */
-  getCurrentUser: async (token: string): Promise<AuthUser> => {
+  getCurrentUser: async (): Promise<AuthUser> => {
     try {
-      const response = await axios.get(
-        `${API_BASE_URL}/auth/me`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+      const response = await apiClient.get('/auth/validate');
       
       if (!response.data.success) {
         throw new Error(response.data.message || 'Failed to fetch user profile');

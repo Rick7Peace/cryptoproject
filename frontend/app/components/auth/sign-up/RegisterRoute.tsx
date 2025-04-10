@@ -43,7 +43,7 @@ const Register: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-indigo-800 to-purple-900 flex items-center justify-center p-4">
-      <div className="absolute top-0 left-0 w-full h-full bg-[url('/images/crypto-pattern.png')] opacity-10 z-0"></div>
+      <div className="absolute top-0 left-0 w-full h-full opacity-10 z-0"></div>
       
       {/* Decorative elements */}
       <div className="absolute top-1/3 left-20 w-24 h-24 bg-blue-500 rounded-full filter blur-3xl opacity-20 animate-pulse"></div>

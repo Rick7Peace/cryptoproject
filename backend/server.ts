@@ -6,7 +6,6 @@ import authRoutes from './routes/authRoutes';
 import portfolioRoutes from './routes/portfolioRoutes';
 import cryptoRoutes from './routes/cryptoRoutes';
 import watchlistRoutes from './routes/watchlistRoutes';
-// Add this import
 import cors from 'cors';
 
 // Load environment variables
