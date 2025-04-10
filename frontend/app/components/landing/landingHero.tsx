@@ -2,10 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { getTopCryptos, getCryptoPrices } from '~/services/cryptoService';
 import type { Crypto } from '~/types/cryptoTypes';
-
-// Price transition duration in ms (longer = smoother but less responsive)
-const TRANSITION_DURATION = 1200;
-const BUFFER_DELAY = 500;
+import ErrorAlert from '~/components/dashboard/ErrorAlert';
 
 const LandingHero: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -15,32 +12,11 @@ const LandingHero: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshInterval, setRefreshInterval] = useState<number>(30); // seconds
+
+  // Keep track of previous prices for transition effects
+  const prevPricesRef = useRef<Record<string, number>>({});
   
-  // Track which coins are currently transitioning
-  const [transitioningCoins, setTransitioningCoins] = useState<Set<string>>(new Set());
-  // Store previous prices for smoother transitions
-  const previousPricesRef = useRef<Record<string, number>>({});
-
-  // Fetch initial trending coins
-  const fetchTrendingCoins = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      
-      const response = await getTopCryptos(4); // Get top 4 trending coins
-      setTrendingCoins(response);
-      setDisplayCoins(response);
-      
-      await updatePrices(response);
-    } catch (err) {
-      console.error('Failed to fetch trending coins:', err);
-      setError('Could not load cryptocurrency data');
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  // Update cryptocurrency prices in real-time
+  // Memoize updatePrices to prevent unnecessary recreations
   const updatePrices = useCallback(async (coins = trendingCoins) => {
     if (coins.length === 0) return;
     
@@ -49,17 +25,19 @@ const LandingHero: React.FC = () => {
       const coinIds = coins.map(coin => coin.coinId);
       const priceData = await getCryptoPrices(coinIds);
       
-      // Save current prices before updating
-      const newPreviousPrices = { ...previousPricesRef.current };
+      // Store current prices for transition effects
+      const newPrevPrices: Record<string, number> = {};
+      coins.forEach(coin => {
+        if (coin.currentPrice) {
+          newPrevPrices[coin.coinId] = coin.currentPrice;
+        }
+      });
+      prevPricesRef.current = newPrevPrices;
       
       // Update each coin with its latest price data
       const updatedCoins = coins.map(coin => {
         const price = priceData[coin.coinId];
         if (price) {
-          if (coin.currentPrice) {
-            newPreviousPrices[coin.coinId] = coin.currentPrice;
-          }
-          
           return {
             ...coin,
             currentPrice: price.usd,
@@ -69,83 +47,79 @@ const LandingHero: React.FC = () => {
         return coin;
       });
       
-      // Update refs and state
-      previousPricesRef.current = newPreviousPrices;
       setTrendingCoins(updatedCoins);
       setCurrentTime(new Date());
     } catch (err) {
       console.error('Failed to update prices:', err);
+      // Don't set error state here to avoid disrupting the UI if just a price update fails
     } finally {
       setIsRefreshing(false);
     }
   }, [trendingCoins]);
 
-  // Initial data load
+  // Fetch initial trending coins
+  const fetchTrendingCoins = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const response = await getTopCryptos(4); // Get top 4 trending coins
+      setTrendingCoins(response);
+      setDisplayCoins(response); // Set initial display coins
+      
+      // Now fetch their current prices
+      await updatePrices(response);
+    } catch (err) {
+      console.error('Failed to fetch trending coins:', err);
+      setError('Could not load cryptocurrency data. Please try again later.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [updatePrices]);
+
+  // Initial load
   useEffect(() => {
     fetchTrendingCoins();
   }, [fetchTrendingCoins]);
 
-  // Auto-refresh setup
+  // Set up auto-refresh interval - only depends on refreshInterval
   useEffect(() => {
     const interval = setInterval(() => {
       updatePrices();
     }, refreshInterval * 1000);
     
+    // Cleanup on unmount
     return () => clearInterval(interval);
   }, [refreshInterval, updatePrices]);
 
-  // Handle price display updates with buffer
+  // Visual buffer - smooth transition for price updates
   useEffect(() => {
     if (trendingCoins.length === 0) return;
     
-    // Create a new set of transitioning coins
-    const newTransitioning = new Set<string>();
-    
-    // For each coin, apply transition if price changed
-    trendingCoins.forEach(coin => {
-      const prevPrice = previousPricesRef.current[coin.coinId];
-      
-      if (prevPrice !== undefined && coin.currentPrice !== prevPrice) {
-        newTransitioning.add(coin.coinId);
-      }
-    });
-    
-    // Update transitioning state
-    setTransitioningCoins(newTransitioning);
-    
-    // Use setTimeout to create a buffer before updating displayed coins
+    // Use setTimeout to create a visual delay before updating displayed prices
     const timer = setTimeout(() => {
-      setDisplayCoins([...trendingCoins]);
-      
-      // Clear transitions after animation completes
-      const clearTimer = setTimeout(() => {
-        setTransitioningCoins(new Set());
-      }, TRANSITION_DURATION);
-      
-      return () => clearTimeout(clearTimer);
-    }, BUFFER_DELAY);
+      setDisplayCoins(trendingCoins);
+    }, 300); // 300ms delay helps with visual transition
     
     return () => clearTimeout(timer);
   }, [trendingCoins]);
 
-  // Get class for price change animation
+  // Handle manual refresh
+  const handleManualRefresh = () => {
+    updatePrices();
+  };
+
+  // Determine price change class and animation
   const getPriceChangeClass = (coin: Crypto) => {
-    if (!transitioningCoins.has(coin.coinId)) return "";
-    
-    const prevPrice = previousPricesRef.current[coin.coinId];
+    const prevPrice = prevPricesRef.current[coin.coinId];
     if (!prevPrice || !coin.currentPrice) return "";
     
     if (coin.currentPrice > prevPrice) {
-      return "price-increase";
+      return "animate-price-increase";
     } else if (coin.currentPrice < prevPrice) {
-      return "price-decrease";
+      return "animate-price-decrease";
     }
     return "";
-  };
-
-  // Manual refresh handler
-  const handleManualRefresh = () => {
-    updatePrices();
   };
 
   return (
@@ -185,27 +159,22 @@ const LandingHero: React.FC = () => {
             </div>
             
             {error && (
-              <div className="p-4 bg-red-900/20 border border-red-800 rounded-md mb-4">
-                <p className="text-sm text-red-400">{error}</p>
-              </div>
+              <ErrorAlert error={error} onDismiss={() => setError(null)} />
             )}
             
             {isLoading && displayCoins.length === 0 ? (
               <div className="flex justify-center py-10">
                 <div className="animate-pulse flex space-x-2 items-center">
                   <div className="h-3 w-3 bg-blue-400 rounded-full"></div>
-                  <div className="h-3 w-3 bg-blue-400 rounded-full animation-delay-200"></div>
-                  <div className="h-3 w-3 bg-blue-400 rounded-full animation-delay-500"></div>
+                  <div className="h-3 w-3 bg-blue-400 rounded-full"></div>
+                  <div className="h-3 w-3 bg-blue-400 rounded-full"></div>
                   <span className="text-sm text-gray-400 ml-2">Loading prices...</span>
                 </div>
               </div>
             ) : (
               <div className="space-y-4">
-                {displayCoins.map((coin, index) => (
-                  <div key={coin.coinId} 
-                    className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition cursor-pointer"
-                    style={{ transitionDelay: `${index * 100}ms` }} // Staggered transitions
-                  >
+                {displayCoins.map(coin => (
+                  <div key={coin.coinId} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition cursor-pointer">
                     <div className="flex items-center">
                       <div className="w-8 h-8 bg-gray-700 rounded-full mr-3 flex items-center justify-center overflow-hidden">
                         {coin.image ? (
@@ -220,7 +189,7 @@ const LandingHero: React.FC = () => {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className={`font-medium transition-all duration-1200 ${getPriceChangeClass(coin)}`}>
+                      <p className={`font-medium ${getPriceChangeClass(coin)}`}>
                         ${coin.currentPrice ? coin.currentPrice.toLocaleString(undefined, {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2
