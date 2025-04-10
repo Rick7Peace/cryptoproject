@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { getTopCryptos, getCryptoPrices } from '~/services/cryptoService';
 import type { Crypto } from '~/types/cryptoTypes';
@@ -8,32 +8,15 @@ const LandingHero: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [trendingCoins, setTrendingCoins] = useState<Crypto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshInterval, setRefreshInterval] = useState<number>(30); // seconds
 
-  // Fetch initial trending coins
-  const fetchTrendingCoins = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      
-      const response = await getTopCryptos(4); // Get top 4 trending coins
-      setTrendingCoins(response);
-      
-      // Now fetch their current prices
-      await updatePrices(response);
-    } catch (err) {
-      console.error('Failed to fetch trending coins:', err);
-      setError('Could not load cryptocurrency data. Please try again later.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Update cryptocurrency prices in real-time
-  const updatePrices = async (coins = trendingCoins) => {
+  // Memoize updatePrices to prevent unnecessary recreations
+  const updatePrices = useCallback(async (coins = trendingCoins) => {
     if (coins.length === 0) return;
     
+    setIsRefreshing(true);
     try {
       const coinIds = coins.map(coin => coin.coinId);
       const priceData = await getCryptoPrices(coinIds);
@@ -56,15 +39,36 @@ const LandingHero: React.FC = () => {
     } catch (err) {
       console.error('Failed to update prices:', err);
       // Don't set error state here to avoid disrupting the UI if just a price update fails
+    } finally {
+      setIsRefreshing(false);
     }
-  };
+  }, [trendingCoins]);
+
+  // Fetch initial trending coins
+  const fetchTrendingCoins = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const response = await getTopCryptos(4); // Get top 4 trending coins
+      setTrendingCoins(response);
+      
+      // Now fetch their current prices
+      await updatePrices(response);
+    } catch (err) {
+      console.error('Failed to fetch trending coins:', err);
+      setError('Could not load cryptocurrency data. Please try again later.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [updatePrices]);
 
   // Initial load
   useEffect(() => {
     fetchTrendingCoins();
-  }, []);
+  }, [fetchTrendingCoins]);
 
-  // Set up auto-refresh interval
+  // Set up auto-refresh interval - only depends on refreshInterval
   useEffect(() => {
     const interval = setInterval(() => {
       updatePrices();
@@ -72,7 +76,12 @@ const LandingHero: React.FC = () => {
     
     // Cleanup on unmount
     return () => clearInterval(interval);
-  }, [trendingCoins, refreshInterval]);
+  }, [refreshInterval, updatePrices]);
+
+  // Handle manual refresh
+  const handleManualRefresh = () => {
+    updatePrices();
+  };
 
   return (
     <section className="container mx-auto px-6 py-16 md:py-24 flex flex-col md:flex-row items-center">
@@ -98,9 +107,16 @@ const LandingHero: React.FC = () => {
           <div className="relative bg-slate-800 rounded-lg p-6 shadow-xl">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg font-medium">Trending Coins</h3>
-              <span className="text-sm text-gray-400">
-                Last updated: {currentTime.toLocaleTimeString()}
-              </span>
+              <div className="flex items-center">
+                {isRefreshing && !isLoading && (
+                  <span className="mr-2">
+                    <div className="h-2 w-2 bg-blue-400 rounded-full animate-pulse"></div>
+                  </span>
+                )}
+                <span className="text-sm text-gray-400">
+                  Last updated: {currentTime.toLocaleTimeString()}
+                </span>
+              </div>
             </div>
             
             {error && (
@@ -156,6 +172,7 @@ const LandingHero: React.FC = () => {
                 className="bg-slate-700 text-xs text-gray-200 rounded px-2 py-1 border border-gray-600"
                 value={refreshInterval}
                 onChange={(e) => setRefreshInterval(Number(e.target.value))}
+                disabled={isLoading}
               >
                 <option value="10">10s</option>
                 <option value="30">30s</option>
@@ -163,11 +180,12 @@ const LandingHero: React.FC = () => {
                 <option value="300">5m</option>
               </select>
               <button
-                onClick={() => updatePrices()}
-                className="bg-blue-500 hover:bg-blue-600 text-white p-1 rounded"
+                onClick={handleManualRefresh}
+                className={`bg-blue-500 hover:bg-blue-600 text-white p-1 rounded ${(isRefreshing || isLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
                 title="Refresh now"
+                disabled={isRefreshing || isLoading}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
               </button>
