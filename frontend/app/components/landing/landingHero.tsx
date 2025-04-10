@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { getTopCryptos, getCryptoPrices } from '~/services/cryptoService';
 import type { Crypto } from '~/types/cryptoTypes';
@@ -7,11 +7,15 @@ import ErrorAlert from '~/components/dashboard/ErrorAlert';
 const LandingHero: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [trendingCoins, setTrendingCoins] = useState<Crypto[]>([]);
+  const [displayCoins, setDisplayCoins] = useState<Crypto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshInterval, setRefreshInterval] = useState<number>(30); // seconds
 
+  // Keep track of previous prices for transition effects
+  const prevPricesRef = useRef<Record<string, number>>({});
+  
   // Memoize updatePrices to prevent unnecessary recreations
   const updatePrices = useCallback(async (coins = trendingCoins) => {
     if (coins.length === 0) return;
@@ -20,6 +24,15 @@ const LandingHero: React.FC = () => {
     try {
       const coinIds = coins.map(coin => coin.coinId);
       const priceData = await getCryptoPrices(coinIds);
+      
+      // Store current prices for transition effects
+      const newPrevPrices: Record<string, number> = {};
+      coins.forEach(coin => {
+        if (coin.currentPrice) {
+          newPrevPrices[coin.coinId] = coin.currentPrice;
+        }
+      });
+      prevPricesRef.current = newPrevPrices;
       
       // Update each coin with its latest price data
       const updatedCoins = coins.map(coin => {
@@ -52,6 +65,7 @@ const LandingHero: React.FC = () => {
       
       const response = await getTopCryptos(4); // Get top 4 trending coins
       setTrendingCoins(response);
+      setDisplayCoins(response); // Set initial display coins
       
       // Now fetch their current prices
       await updatePrices(response);
@@ -78,9 +92,34 @@ const LandingHero: React.FC = () => {
     return () => clearInterval(interval);
   }, [refreshInterval, updatePrices]);
 
+  // Visual buffer - smooth transition for price updates
+  useEffect(() => {
+    if (trendingCoins.length === 0) return;
+    
+    // Use setTimeout to create a visual delay before updating displayed prices
+    const timer = setTimeout(() => {
+      setDisplayCoins(trendingCoins);
+    }, 300); // 300ms delay helps with visual transition
+    
+    return () => clearTimeout(timer);
+  }, [trendingCoins]);
+
   // Handle manual refresh
   const handleManualRefresh = () => {
     updatePrices();
+  };
+
+  // Determine price change class and animation
+  const getPriceChangeClass = (coin: Crypto) => {
+    const prevPrice = prevPricesRef.current[coin.coinId];
+    if (!prevPrice || !coin.currentPrice) return "";
+    
+    if (coin.currentPrice > prevPrice) {
+      return "animate-price-increase";
+    } else if (coin.currentPrice < prevPrice) {
+      return "animate-price-decrease";
+    }
+    return "";
   };
 
   return (
@@ -123,7 +162,7 @@ const LandingHero: React.FC = () => {
               <ErrorAlert error={error} onDismiss={() => setError(null)} />
             )}
             
-            {isLoading && trendingCoins.length === 0 ? (
+            {isLoading && displayCoins.length === 0 ? (
               <div className="flex justify-center py-10">
                 <div className="animate-pulse flex space-x-2 items-center">
                   <div className="h-3 w-3 bg-blue-400 rounded-full"></div>
@@ -134,7 +173,7 @@ const LandingHero: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                {trendingCoins.map(coin => (
+                {displayCoins.map(coin => (
                   <div key={coin.coinId} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg hover:bg-slate-700 transition cursor-pointer">
                     <div className="flex items-center">
                       <div className="w-8 h-8 bg-gray-700 rounded-full mr-3 flex items-center justify-center overflow-hidden">
@@ -150,7 +189,7 @@ const LandingHero: React.FC = () => {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium">
+                      <p className={`font-medium ${getPriceChangeClass(coin)}`}>
                         ${coin.currentPrice ? coin.currentPrice.toLocaleString(undefined, {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2
