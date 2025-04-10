@@ -11,13 +11,14 @@ const LandingHero: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [refreshInterval] = useState<number>(20); // Fixed at 20 seconds
+  const [refreshInterval] = useState<number>(30); // Changed to 30 seconds
   const [lastFetchTime, setLastFetchTime] = useState<number>(0);
 
   // Refs to prevent unnecessary re-renders
   const prevPricesRef = useRef<Record<string, number>>({});
   const trendingCoinsRef = useRef<Crypto[]>([]);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const bufferTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Store current coins in ref without triggering re-renders
   useEffect(() => {
@@ -29,36 +30,16 @@ const LandingHero: React.FC = () => {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const response = await getTopCryptos(4);
-      
+      console.log('Fetched Trending Coins:', response); // Debugging line
+
       if (!response || response.length === 0) {
         throw new Error('No trending coins available');
       }
-      
+
       setTrendingCoins(response);
       setDisplayCoins(response);
-      
-      // Initial price fetch
-      const coinIds = response.map(coin => coin.coinId);
-      const priceData = await getCryptoPrices(coinIds);
-      
-      const updatedCoins = response.map(coin => {
-        const price = priceData[coin.coinId];
-        if (price) {
-          return {
-            ...coin,
-            currentPrice: price.usd,
-            priceChangePercentage24h: price.usd_24h_change || coin.priceChangePercentage24h
-          };
-        }
-        return coin;
-      });
-      
-      setTrendingCoins(updatedCoins);
-      setDisplayCoins(updatedCoins);
-      setLastFetchTime(Date.now());
-      
     } catch (err) {
       console.error('Failed to fetch trending coins:', err);
       setError('Could not load cryptocurrency data. Please try again later.');
@@ -67,10 +48,17 @@ const LandingHero: React.FC = () => {
     }
   }, []);
 
-  // Function to update prices only
+  // Function to update prices only with buffering
   const updatePrices = useCallback(async () => {
     // Skip if we're already refreshing or no coins exist
     if (isRefreshing || trendingCoinsRef.current.length === 0) return;
+    
+    // Enforce minimum time between updates (buffer)
+    const now = Date.now();
+    if (now - lastFetchTime < 15000) { // At least 15 seconds between refreshes
+      console.log('Skipping update, too soon since last refresh');
+      return;
+    }
     
     setIsRefreshing(true);
     try {
@@ -100,57 +88,55 @@ const LandingHero: React.FC = () => {
         return coin;
       });
       
+      // Update state with new data
       setTrendingCoins(updatedCoins);
       setCurrentTime(new Date());
-      setLastFetchTime(Date.now());
+      
+      // Use a delayed update for the display coins to create a buffer
+      if (bufferTimeoutRef.current) clearTimeout(bufferTimeoutRef.current);
+      bufferTimeoutRef.current = setTimeout(() => {
+        setDisplayCoins(updatedCoins);
+        setLastFetchTime(now);
+      }, 750); // 750ms buffer for smoother visual transition
+      
     } catch (err) {
       console.error('Failed to update prices:', err);
     } finally {
       setIsRefreshing(false);
     }
-  }, [isRefreshing]);
+  }, [isRefreshing, lastFetchTime]);
 
   // Initial fetch on component mount
   useEffect(() => {
     fetchTrendingCoins();
     
-    // Clear any existing intervals when component mounts
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
+    // Clean up all timeouts/intervals when component unmounts
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (bufferTimeoutRef.current) clearTimeout(bufferTimeoutRef.current);
+    };
+  }, [fetchTrendingCoins]);
+
+  // Set up exactly 30-second refresh interval
+  useEffect(() => {
+    // Clear any existing intervals
+    if (intervalRef.current) clearInterval(intervalRef.current);
     
-    // Set up exact 20-second interval
+    // Set new interval
     intervalRef.current = setInterval(() => {
       updatePrices();
-    }, 20000); // Fixed 20 seconds
+    }, refreshInterval * 1000); // 30 seconds
     
-    // Clear interval on unmount
+    // Clean up on unmount or when dependencies change
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [fetchTrendingCoins, updatePrices]);
-  
-  // Visual buffer - smooth transition with longer delay
-  useEffect(() => {
-    if (trendingCoins.length === 0) return;
-    
-    // Use longer timeout for smoother visual transition
-    const timer = setTimeout(() => {
-      setDisplayCoins(trendingCoins);
-    }, 750); // 750ms delay for smoother transition
-    
-    return () => clearTimeout(timer);
-  }, [trendingCoins]);
+  }, [refreshInterval, updatePrices]);
 
-  // Handle manual refresh
+  // Handle manual refresh with immediate update and interval reset
   const handleManualRefresh = () => {
     // Cancel current interval
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
+    if (intervalRef.current) clearInterval(intervalRef.current);
     
     // Immediately update prices
     updatePrices();
@@ -158,7 +144,7 @@ const LandingHero: React.FC = () => {
     // Reset interval timing
     intervalRef.current = setInterval(() => {
       updatePrices();
-    }, 20000);
+    }, refreshInterval * 1000);
   };
 
   // Price change animation class
@@ -226,6 +212,10 @@ const LandingHero: React.FC = () => {
                   <span className="text-sm text-gray-400 ml-2">Loading prices...</span>
                 </div>
               </div>
+            ) : displayCoins.length === 0 ? (
+              <div className="flex justify-center py-10">
+                <p className="text-gray-400">No trending coins available</p>
+              </div>
             ) : (
               <div className="space-y-4">
                 {displayCoins.map(coin => (
@@ -251,7 +241,7 @@ const LandingHero: React.FC = () => {
                         }) : 'Loading...'}
                       </p>
                       <p className={`text-sm ${coin.priceChangePercentage24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                        {coin.priceChangePercentage24h >= 0 ? '▲' : '▼'} {Math.abs(coin.priceChangePercentage24h).toFixed(2)}%
+                        {coin.priceChangePercentage24h >= 0 ? '▲' : '▼'} {Math.abs(coin.priceChangePercentage24h || 0).toFixed(2)}%
                       </p>
                     </div>
                   </div>
@@ -259,9 +249,9 @@ const LandingHero: React.FC = () => {
               </div>
             )}
             
-            {/* Bottom controls with refresh button but no interval control */}
+            {/* Bottom controls with refresh button */}
             <div className="mt-6 flex justify-end items-center space-x-2">
-              <span className="text-xs text-gray-400">Auto-refreshes every 20 seconds</span>
+              <span className="text-xs text-gray-400">Auto-refreshes every 30 seconds</span>
               <button
                 onClick={handleManualRefresh}
                 className={`bg-blue-500 hover:bg-blue-600 text-white p-1 rounded ${isRefreshing ? 'opacity-50 cursor-not-allowed' : ''}`}
