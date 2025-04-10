@@ -1,7 +1,7 @@
 import axios, { AxiosError } from 'axios';
 import type { AxiosRequestConfig } from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://cryptotrack-api-ezlm.onrender.com/api';
 
 // Standard response type for all API responses
 export interface ApiResponse<T = any> {

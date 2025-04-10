@@ -1,7 +1,7 @@
 import axios from 'axios';
 import type { Crypto } from '../types/cryptoTypes';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://cryptotrack-api-ezlm.onrender.com/api';
 
 // Get the user's watchlist
 export const getUserWatchlist = async (token: string): Promise<Crypto[]> => {

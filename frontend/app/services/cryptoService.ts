@@ -2,7 +2,7 @@ import axios from 'axios';
 import type { Crypto, CryptoDetail, HistoricalData } from '~/types/cryptoTypes';
 
 // API base URL - adjust based on your environment
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://cryptotrack-api-ezlm.onrender.com/api';
 
 /**
  * Fetch top cryptocurrencies
