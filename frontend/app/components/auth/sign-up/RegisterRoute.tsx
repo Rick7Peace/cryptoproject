@@ -1,46 +1,14 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router';
+import React from 'react';
 import RegisterForm from './RegisterForm';
 import { useAuth } from '../../../context/AuthContext';
-import { validateRegistrationForm } from '../../../utils/authValidation';
 
-const Register: React.FC = () => {
-  const [error, setError] = useState<string | null>(null);
-  const { register } = useAuth();
-  const navigate = useNavigate();
+/**
+ * Register route component that serves as the container for the registration page
+ * This component handles the layout and UI elements around the form
+ */
+const RegisterRoute: React.FC = () => {
+  const { error } = useAuth();
   
-  const handleRegister = async (
-    email: string,
-    password: string,
-    confirmPassword: string,
-    username?: string
-  ) => {
-    // Validate form inputs
-    const validation = validateRegistrationForm(email, password, confirmPassword, username);
-    if (!validation.isValid) {
-      // Get first error message
-      const firstError = Object.values(validation.errors).find(msg => msg !== '');
-      setError(firstError || 'Invalid registration details');
-      return;
-    }
-    
-    try {
-      setError(null);
-      await register({
-        email: email,
-       password: password,
-        confirmPassword: confirmPassword,
-        username: username || ''
-      });
-      // Redirect to login with success message
-      navigate('/login', { 
-        state: { message: 'Account created successfully! Please sign in.' }
-      });
-    } catch (err: any) {
-      setError(err.message || 'Failed to create account. Please try again.');
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-indigo-800 to-purple-900 flex items-center justify-center p-4">
       <div className="absolute top-0 left-0 w-full h-full opacity-10 z-0"></div>
@@ -55,12 +23,10 @@ const Register: React.FC = () => {
           <p className="mt-2 text-gray-300">Create an account to get started</p>
         </div>
         
-        {error && <div className="mb-6 p-3 bg-red-500/20 backdrop-blur-sm border border-red-400 text-red-100 rounded-lg text-center">{error}</div>}
-        
-        <RegisterForm onSubmit={handleRegister} />
+        <RegisterForm />
       </div>
     </div>
   );
 };
 
-export default Register;
+export default RegisterRoute;
