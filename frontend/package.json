@@ -3,11 +3,13 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "prebuild": "npm i rollup@latest --no-save --no-optional",
     "build": "react-router build",
     "postbuild": "node -e \"require('fs').copyFileSync('public/_redirects', 'build/client/_redirects')\"",
     "dev": "react-router dev",
     "start": "react-router-serve ./build/server/index.js",
-    "typecheck": "react-router typegen && tsc"
+    "typecheck": "react-router typegen && tsc",
+    "clean-rebuild": "rm -rf node_modules package-lock.json && npm install && npm run build"
   },
   "dependencies": {
     "@react-router/node": "^7.4.1",
@@ -17,8 +19,7 @@
     "isbot": "^5.1.17",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-router": "^7.4.1",
-    "react-router-dom": "^7.4.1"
+    "react-router": "^7.4.1"
   },
   "devDependencies": {
     "@react-router/dev": "^7.4.1",
@@ -26,7 +27,6 @@
     "@types/node": "^20",
     "@types/react": "^19.0.1",
     "@types/react-dom": "^19.0.1",
-    "react-router-devtools": "^1.1.0",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.7.2",
     "vite": "^5.4.11",
