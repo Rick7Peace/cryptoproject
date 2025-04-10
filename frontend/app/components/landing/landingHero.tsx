@@ -11,31 +11,39 @@ const LandingHero: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [refreshInterval, setRefreshInterval] = useState<number>(30); // seconds
+  const [refreshInterval] = useState<number>(20); // Fixed at 20 seconds
+  const [lastFetchTime, setLastFetchTime] = useState<number>(0);
 
-  // Keep track of previous prices for transition effects
+  // Refs to prevent unnecessary re-renders
   const prevPricesRef = useRef<Record<string, number>>({});
+  const trendingCoinsRef = useRef<Crypto[]>([]);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Memoize updatePrices to prevent unnecessary recreations
-  const updatePrices = useCallback(async (coins = trendingCoins) => {
-    if (coins.length === 0) return;
+  // Store current coins in ref without triggering re-renders
+  useEffect(() => {
+    trendingCoinsRef.current = trendingCoins;
+  }, [trendingCoins]);
 
-    setIsRefreshing(true);
+  // Separate initial data fetch from price updates
+  const fetchTrendingCoins = useCallback(async () => {
     try {
-      const coinIds = coins.map(coin => coin.coinId);
+      setIsLoading(true);
+      setError(null);
+      
+      const response = await getTopCryptos(4);
+      
+      if (!response || response.length === 0) {
+        throw new Error('No trending coins available');
+      }
+      
+      setTrendingCoins(response);
+      setDisplayCoins(response);
+      
+      // Initial price fetch
+      const coinIds = response.map(coin => coin.coinId);
       const priceData = await getCryptoPrices(coinIds);
-
-      // Store current prices for transition effects
-      const newPrevPrices: Record<string, number> = {};
-      coins.forEach(coin => {
-        if (coin.currentPrice) {
-          newPrevPrices[coin.coinId] = coin.currentPrice;
-        }
-      });
-      prevPricesRef.current = newPrevPrices;
-
-      // Update each coin with its latest price data
-      const updatedCoins = coins.map(coin => {
+      
+      const updatedCoins = response.map(coin => {
         const price = priceData[coin.coinId];
         if (price) {
           return {
@@ -46,84 +54,129 @@ const LandingHero: React.FC = () => {
         }
         return coin;
       });
-
+      
       setTrendingCoins(updatedCoins);
-      setCurrentTime(new Date());
-    } catch (err) {
-      console.error('Failed to update prices:', err);
-      // Don't set error state here to avoid disrupting the UI if just a price update fails
-    } finally {
-      setIsRefreshing(false);
-    }
-  }, [trendingCoins]);
-
-  // Fetch initial trending coins
-  const fetchTrendingCoins = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const response = await getTopCryptos(4); // Get top 4 trending coins
-      setTrendingCoins(response);
-      setDisplayCoins(response); // Set initial display coins
-
-      // Now fetch their current prices
-      await updatePrices(response);
+      setDisplayCoins(updatedCoins);
+      setLastFetchTime(Date.now());
+      
     } catch (err) {
       console.error('Failed to fetch trending coins:', err);
       setError('Could not load cryptocurrency data. Please try again later.');
     } finally {
       setIsLoading(false);
     }
-  }, [updatePrices]);
+  }, []);
 
-  // Initial load
+  // Function to update prices only
+  const updatePrices = useCallback(async () => {
+    // Skip if we're already refreshing or no coins exist
+    if (isRefreshing || trendingCoinsRef.current.length === 0) return;
+    
+    setIsRefreshing(true);
+    try {
+      console.log('Updating crypto prices at', new Date().toLocaleTimeString());
+      const coinIds = trendingCoinsRef.current.map(coin => coin.coinId);
+      const priceData = await getCryptoPrices(coinIds);
+      
+      // Store current prices for transition effects
+      const newPrevPrices: Record<string, number> = {};
+      trendingCoinsRef.current.forEach(coin => {
+        if (coin.currentPrice) {
+          newPrevPrices[coin.coinId] = coin.currentPrice;
+        }
+      });
+      prevPricesRef.current = newPrevPrices;
+      
+      // Update each coin with its latest price data
+      const updatedCoins = trendingCoinsRef.current.map(coin => {
+        const price = priceData[coin.coinId];
+        if (price) {
+          return {
+            ...coin,
+            currentPrice: price.usd,
+            priceChangePercentage24h: price.usd_24h_change || coin.priceChangePercentage24h
+          };
+        }
+        return coin;
+      });
+      
+      setTrendingCoins(updatedCoins);
+      setCurrentTime(new Date());
+      setLastFetchTime(Date.now());
+    } catch (err) {
+      console.error('Failed to update prices:', err);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [isRefreshing]);
+
+  // Initial fetch on component mount
   useEffect(() => {
     fetchTrendingCoins();
-  }, [fetchTrendingCoins]);
-
-  // Set up auto-refresh interval - only depends on refreshInterval
-  useEffect(() => {
-    const interval = setInterval(() => {
+    
+    // Clear any existing intervals when component mounts
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+    
+    // Set up exact 20-second interval
+    intervalRef.current = setInterval(() => {
       updatePrices();
-    }, refreshInterval * 1000);
-
-    // Cleanup on unmount
-    return () => clearInterval(interval);
-  }, [refreshInterval, updatePrices]);
-
-  // Visual buffer - smooth transition for price updates
+    }, 20000); // Fixed 20 seconds
+    
+    // Clear interval on unmount
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [fetchTrendingCoins, updatePrices]);
+  
+  // Visual buffer - smooth transition with longer delay
   useEffect(() => {
     if (trendingCoins.length === 0) return;
-
-    // Use setTimeout to create a visual delay before updating displayed prices
+    
+    // Use longer timeout for smoother visual transition
     const timer = setTimeout(() => {
       setDisplayCoins(trendingCoins);
-    }, 300); // 300ms delay helps with visual transition
-
+    }, 750); // 750ms delay for smoother transition
+    
     return () => clearTimeout(timer);
   }, [trendingCoins]);
 
   // Handle manual refresh
   const handleManualRefresh = () => {
+    // Cancel current interval
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+    
+    // Immediately update prices
     updatePrices();
+    
+    // Reset interval timing
+    intervalRef.current = setInterval(() => {
+      updatePrices();
+    }, 20000);
   };
 
-  // Determine price change class and animation
+  // Price change animation class
   const getPriceChangeClass = (coin: Crypto) => {
     const prevPrice = prevPricesRef.current[coin.coinId];
     if (!prevPrice || !coin.currentPrice) return "";
-
+    
     if (coin.currentPrice > prevPrice) {
-      return "animate-price-increase";
+      return "text-green-500 transition-colors duration-1000";
     } else if (coin.currentPrice < prevPrice) {
-      return "animate-price-decrease";
+      return "text-red-500 transition-colors duration-1000";
     }
     return "";
   };
 
   return (
     <section className="container mx-auto px-6 py-16 md:py-24 flex flex-col md:flex-row items-center">
+      {/* Left column content */}
       <div className="md:w-1/2 md:pr-10">
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
           <span className="bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">Master Your Crypto Portfolio</span>
@@ -140,6 +193,8 @@ const LandingHero: React.FC = () => {
           </Link>
         </div>
       </div>
+
+      {/* Right column with crypto prices */}
       <div className="md:w-1/2 mt-12 md:mt-0">
         <div className="relative">
           <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg blur opacity-50"></div>
@@ -147,21 +202,21 @@ const LandingHero: React.FC = () => {
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg font-medium">Trending Coins</h3>
               <div className="flex items-center">
-                {isRefreshing && !isLoading && (
+                {isRefreshing && (
                   <span className="mr-2">
                     <div className="h-2 w-2 bg-blue-400 rounded-full animate-pulse"></div>
                   </span>
                 )}
                 <span className="text-sm text-gray-400">
-                  Last updated: {currentTime.toLocaleTimeString()}
+                  Updated: {currentTime.toLocaleTimeString()}
                 </span>
               </div>
             </div>
-
+            
             {error && (
               <ErrorAlert error={error} onDismiss={() => setError(null)} />
             )}
-
+            
             {isLoading && displayCoins.length === 0 ? (
               <div className="flex justify-center py-10">
                 <div className="animate-pulse flex space-x-2 items-center">
@@ -203,26 +258,14 @@ const LandingHero: React.FC = () => {
                 ))}
               </div>
             )}
-
-            {/* Refresh rate controls */}
+            
+            {/* Bottom controls with refresh button but no interval control */}
             <div className="mt-6 flex justify-end items-center space-x-2">
-              <span className="text-xs text-gray-400">Refresh rate:</span>
-              <select
-                className="bg-slate-700 text-xs text-gray-200 rounded px-2 py-1 border border-gray-600"
-                value={refreshInterval}
-                onChange={(e) => setRefreshInterval(Number(e.target.value))}
-                disabled={isLoading}
-              >
-                <option value="10">10s</option>
-                <option value="30">30s</option>
-                <option value="60">1m</option>
-                <option value="300">5m</option>
-              </select>
+              <span className="text-xs text-gray-400">Auto-refreshes every 20 seconds</span>
               <button
                 onClick={handleManualRefresh}
-                className={`bg-blue-500 hover:bg-blue-600 text-white p-1 rounded ${(isRefreshing || isLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                title="Refresh now"
-                disabled={isRefreshing || isLoading}
+                className={`bg-blue-500 hover:bg-blue-600 text-white p-1 rounded ${isRefreshing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={isRefreshing}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
