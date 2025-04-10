@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom'; // Fixed import and added useNavigate
+import { Link, useNavigate } from 'react-router'; // Fixed import and added useNavigate
 import React, { useState } from 'react';
 import { useAuth } from '~/context/AuthContext';
 
