@@ -9,7 +9,7 @@ const ErrorAlert: React.FC<ErrorAlertProps> = ({ error, onDismiss }) => {
   if (!error) return null;
 
   return (
-    <div className="mb-4 p-4 bg-red-50 rounded-md border border-red-200">
+    <div className="mb-4 p-4 bg-red-900/30 rounded-md border border-red-700">
       <div className="flex">
         <div className="flex-shrink-0">
           <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -17,14 +17,14 @@ const ErrorAlert: React.FC<ErrorAlertProps> = ({ error, onDismiss }) => {
           </svg>
         </div>
         <div className="ml-3">
-          <p className="text-sm text-red-700">{error}</p>
+          <p className="text-sm text-red-300">{error}</p>
         </div>
         <div className="ml-auto pl-3">
           <div className="-mx-1.5 -my-1.5">
             <button
               type="button"
               onClick={onDismiss}
-              className="inline-flex rounded-md p-1.5 text-red-500 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+              className="inline-flex rounded-md p-1.5 text-red-400 hover:bg-red-800 transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-red-900 focus:ring-red-500"
             >
               <span className="sr-only">Dismiss</span>
               <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">

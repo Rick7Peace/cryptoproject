@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router';
 
 interface DashboardHeaderProps {
   username: string;
@@ -7,17 +8,23 @@ interface DashboardHeaderProps {
 
 const DashboardHeader: React.FC<DashboardHeaderProps> = ({ username, onRefresh }) => {
   return (
-    <header className="bg-white shadow">
+    <header className="bg-slate-800 shadow-lg border-b border-slate-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Cryptocurrency Tracker</h1>
+        <h1 className="text-2xl font-bold">
+        <Link to="/" className="hover:opacity-80 transition">
+            <span className="bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+              CryptoTracker
+            </span>
+          </Link>
+        </h1>
         <div className="flex items-center">
-          <div className="mr-4">
-            <span className="block text-sm font-medium text-gray-500">Welcome,</span>
-            <span className="text-sm text-gray-900">{username || 'User'}</span>
+          <div className="mr-4 text-right">
+            <span className="block text-sm font-medium text-gray-400">Welcome,</span>
+            <span className="text-sm text-gray-100">{username || 'User'}</span>
           </div>
           <button 
             onClick={onRefresh}
-            className="inline-flex items-center p-2 border border-transparent rounded-full shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+            className="inline-flex items-center p-2 border border-transparent rounded-full shadow-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:opacity-90 transition"
             aria-label="Refresh prices"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">

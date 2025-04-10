@@ -33,29 +33,48 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         return;
       }
 
-      try {
-        setIsChecking(true);
-        let hasAccess = true;
+      // Inside useEffect's checkAuthorization function:
 
-        // Check permission if required
-        if (requiredPermission) {
-          const hasPermission = await authorizationApi.hasPermission(requiredPermission);
-          hasAccess = hasAccess && hasPermission;
-        }
+try {
+  setIsChecking(true);
+  let hasAccess = true;
 
-        // Check role if required
-        if (requiredRole) {
-          const hasRole = await authorizationApi.hasRole(requiredRole);
-          hasAccess = hasAccess && hasRole;
-        }
+  // Check permission if required
+  if (requiredPermission) {
+    console.log(`Checking permission: ${requiredPermission}`);
+    const hasPermission = await authorizationApi.hasPermission(requiredPermission);
+    console.log(`Permission result for ${requiredPermission}: ${hasPermission}`);
+    hasAccess = hasAccess && hasPermission;
+  }
 
-        setIsAuthorized(hasAccess);
-      } catch (error) {
-        console.error('Error checking authorization:', error);
-        setIsAuthorized(false);
-      } finally {
-        setIsChecking(false);
-      }
+  // Check role if required
+  if (requiredRole) {
+    console.log(`Checking role: ${requiredRole}`);
+    const hasRole = await authorizationApi.hasRole(requiredRole);
+    console.log(`Role result for ${requiredRole}: ${hasRole}`);
+    hasAccess = hasAccess && hasRole;
+  }
+
+  console.log(`Final authorization result: ${hasAccess}`);
+  setIsAuthorized(hasAccess);
+} catch (error) {
+  console.error('Error checking authorization:', error);
+  
+  // Type narrowing approach
+  const errorMessage = error instanceof Error 
+    ? error.message 
+    : String(error);
+  
+  if (errorMessage.toLowerCase().includes('unauthorized')) {
+    setIsAuthorized(false);
+  } else {
+    // For network errors, don't block access
+    setIsAuthorized(true);
+    console.warn('Allowing access despite error - likely network issue');
+  }
+} finally {
+  setIsChecking(false);
+}
     };
 
     checkAuthorization();

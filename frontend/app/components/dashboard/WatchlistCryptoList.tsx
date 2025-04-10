@@ -1,68 +1,106 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import type { Crypto } from '~/types/cryptoTypes';
+
+// Sub-components for better organization
+import { WatchlistHeader } from './watchlist/WatchlistHeader';
+import { CryptoItem } from './watchlist/CryptoItem';
+import { EmptyState } from './watchlist/EmptyState';
+import { LoadingState } from './watchlist/LoadingState';
 
 interface WatchlistCryptoListProps {
   cryptos: Crypto[];
   onRemove: (coinId: string) => void;
   onAddCrypto: () => void;
+  isLoading?: boolean;
 }
 
-const WatchlistCryptoList: React.FC<WatchlistCryptoListProps> = ({ cryptos, onRemove, onAddCrypto }) => {
+const WatchlistCryptoList: React.FC<WatchlistCryptoListProps> = ({ 
+  cryptos, 
+  onRemove, 
+  onAddCrypto,
+  isLoading = false 
+}) => {
+  // Keep a local copy of cryptos to handle transitions and prevent disappearing
+  const [localCryptos, setLocalCryptos] = useState<Crypto[]>(cryptos);
+  const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
+  const [isAddingCrypto, setIsAddingCrypto] = useState(false);
+  
+  // Update local cryptos whenever the prop changes
+  useEffect(() => {
+    if (cryptos?.length) {
+      // Sort the cryptos by name to maintain consistent ordering
+      const sortedCryptos = [...cryptos].sort((a, b) => 
+        (a.name || '').localeCompare(b.name || '')
+      );
+      setLocalCryptos(sortedCryptos);
+    } else {
+      setLocalCryptos([]);
+    }
+  }, [cryptos]);
+  
+  // Enhanced add crypto handler with error handling
+  const handleAddCrypto = () => {
+    if (isAddingCrypto) return; // Prevent multiple clicks
+    
+    setIsAddingCrypto(true);
+    try {
+      onAddCrypto();
+    } catch (error) {
+      console.error("Error adding crypto:", error);
+    } finally {
+      // Reset after a short delay to prevent rapid clicking
+      setTimeout(() => setIsAddingCrypto(false), 1000);
+    }
+  };
+  const handleRemove = (coinId: string) => {
+    if (!coinId) return;
+    
+    // Add to removing set to show animation
+    setRemovingIds(prev => new Set(prev).add(coinId));
+    
+    // Delay actual removal to allow for animation
+    try {
+      onRemove(coinId);
+    } catch (error) {
+      console.error("Error removing crypto:", error);
+      // Remove from animating state if there was an error
+      setRemovingIds(prev => {
+        const updated = new Set(prev);
+        updated.delete(coinId);
+        return updated;
+      });
+    }
+  };
   return (
     <>
-      <div className="mb-6 flex justify-between">
-        <h2 className="text-xl font-medium text-gray-900">Your Tracked Cryptocurrencies</h2>
-        {cryptos.length > 0 && (
-          <button
-            onClick={onAddCrypto}
-            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            Add Crypto
-          </button>
-        )}
-      </div>
+      <WatchlistHeader 
+        hasItems={localCryptos.length > 0}
+        onAddCrypto={handleAddCrypto}
+        isLoading={isLoading || isAddingCrypto}
+      />
 
-      <div className="bg-white shadow overflow-hidden sm:rounded-md">
-        <ul className="divide-y divide-gray-200">
-          {cryptos.map((crypto) => (
-            <li key={crypto._id}>
-              <div className="px-4 py-4 sm:px-6 flex items-center justify-between">
-                <div className="flex items-center">
-                  {crypto.image && <img className="h-10 w-10 rounded-full" src={crypto.image} alt={crypto.name} />}
-                  <div className="ml-4">
-                    <div className="flex items-center">
-                      <p className="text-sm font-medium text-gray-900">{crypto.name}</p>
-                      <span className="ml-1.5 text-xs bg-gray-100 px-2 py-0.5 rounded text-gray-500">{crypto.symbol.toUpperCase()}</span>
-                    </div>
-                    <p className="text-sm text-gray-500">Added to your watchlist</p>
-                  </div>
-                </div>
-                <div className="flex items-center">
-                  <div className="text-right mr-4">
-                    <p className="text-sm font-medium text-gray-900">
-                      ${crypto.currentPrice ? crypto.currentPrice.toLocaleString() : 'N/A'}
-                    </p>
-                    <p className={`text-xs ${crypto.priceChangePercentage24h >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {crypto.priceChangePercentage24h >= 0 ? '▲' : '▼'} {Math.abs(crypto.priceChangePercentage24h).toFixed(2)}%
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => onRemove(crypto.coinId)}
-                    className="ml-2 bg-white rounded-full p-1 text-gray-400 hover:text-red-500"
-                  >
-                    <span className="sr-only">Remove</span>
-                    <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
+      <div className="relative">
+        <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg blur opacity-30"></div>
+        <div className="relative bg-slate-800 shadow overflow-hidden sm:rounded-lg">
+          {isLoading && localCryptos.length === 0 ? (
+            <LoadingState />
+          ) : (
+            <ul className="divide-y divide-slate-700">
+              {localCryptos.map((crypto) => (
+                <CryptoItem 
+                  key={crypto.coinId || crypto._id}
+                  crypto={crypto}
+                  isRemoving={removingIds.has(crypto.coinId)}
+                  onRemove={() => handleRemove(crypto.coinId)}
+                />
+              ))}
+              
+              {localCryptos.length === 0 && !isLoading && (
+                <EmptyState onAddCrypto={onAddCrypto} />
+              )}
+            </ul>
+          )}
+        </div>
       </div>
     </>
   );
