@@ -1,6 +1,3 @@
-// Re-export all crypto API functions
-export * from './crypto';
-
 // Authentication API
 import axios from 'axios';
 import type { AuthResponse } from '../types/authTypes';
