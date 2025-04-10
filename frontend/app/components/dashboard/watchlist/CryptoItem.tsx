@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Crypto } from '~/types/cryptoTypes';
-import styles from '~/styles/cryptoItem.module.css';
+import styles from '~/styles/CryptoItem.module.css';
 
 export interface CryptoItemProps {
   crypto: Crypto;
