@@ -14,13 +14,28 @@ dotenv.config();
 // Create Express app
 const app = express();
 
-// Add CORS middleware before your routes
+// Get allowed origins from environment variable or use defaults
+const allowedOrigins = process.env.CORS_ORIGIN ? 
+  process.env.CORS_ORIGIN.split(',') : 
+  ['https://cryptotrack-oitv.onrender.com', 'http://localhost:5173'];
+
+console.log('CORS allowed origins:', allowedOrigins);
+
+// Improved CORS configuration with preflight handling
 app.use(cors({
-  origin: [
-    'https://cryptotrack-oitv.onrender.com', // Production frontend
-    'http://localhost:5173'                  // Development frontend
-  ],
-  credentials: true
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = `The CORS policy for this site does not allow access from the specified origin: ${origin}`;
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Body parsing middleware
