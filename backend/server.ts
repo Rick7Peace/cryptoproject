@@ -35,7 +35,6 @@ app.get('/health', (_req, res) => {
   });
 });
 
-
 // Connect to MongoDB Atlas using the modular connection file
 connectDB()
   .then(() => {
@@ -46,9 +45,6 @@ connectDB()
     app.use('/api/portfolio', portfolioRoutes);
     app.use('/api/crypto', cryptoRoutes);
     app.use('/api/watchlist', watchlistRoutes);
-
-
-
     
     // Static File Serving Configuration
     if (process.env.NODE_ENV === 'production') {
@@ -70,16 +66,7 @@ connectDB()
           mongodb: 'connected'
         });
       });
-      
-      // Uncomment below to serve static files in development
-      // const devStaticPath = path.join(__dirname, '../client/public');
-      // console.log(`Serving development static files from: ${devStaticPath}`);
-      // app.use(express.static(devStaticPath));
     }
-
-
-
-
     
     // Start server
     const PORT = process.env.PORT || 5000;
@@ -97,6 +84,21 @@ connectDB()
     });
   })
   .catch((error) => {
-    console.error('Failed to connect to MongoDB Atlas:', error);
-    process.exit(1);
+    // Safely log error without passing the full object that might contain URL strings
+    console.error('Failed to connect to MongoDB Atlas:', error.name || 'Connection error');
+    
+    // Set up basic routes for error state
+    app.get('/health', (_req, res) => {
+      res.status(503).json({
+        success: false,
+        message: 'Database connection failed',
+        timestamp: new Date().toISOString(),
+      });
+    });
+    
+    // Start server even if DB connection fails
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+      console.log(`Server running in limited mode (no DB connection) on port ${PORT}`);
+    });
   });

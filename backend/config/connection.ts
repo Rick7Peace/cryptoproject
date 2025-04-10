@@ -18,15 +18,22 @@ const connectDB = async () => {
     });
     
     mongoose.connection.on('error', (err) => {
-      console.error('MongoDB connection error:', err);
+      // Sanitize error output to prevent path-to-regexp issues
+      console.error('MongoDB connection error:', err.name || 'Connection error');
     });
     
     return conn;
   } catch (error: unknown) {
-    console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+    // Sanitize error output - don't log full error objects that might contain URLs
+    const errorName = error instanceof Error ? error.name : 'Unknown error';
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    
+    // Log a sanitized version that won't cause path-to-regexp issues
+    console.error(`Database connection error: ${errorName}`);
+    
     // Don't exit the process on initial connection failure
     // Instead, return null so the application can handle it
-    return null;
+    throw { name: errorName, message: 'Failed to connect to database' };
   }
 };
 
