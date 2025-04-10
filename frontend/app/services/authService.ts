@@ -3,57 +3,20 @@
  */
 import apiClient from "../api/apiClient";
 import type { ApiResponse } from "../api/apiClient";
+import type { 
+  User,  
+  TokenResponse,
+  LoginCredentials,
+  RegisterData,
+  TokenAuthResponse
+} from "../types/authTypes";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// Extended user interface with more fields
-export interface User {
-  _id: string;
-  username: string;
-  email: string;
-  firstName?: string;
-  lastName?: string;
-  profileImage?: string;
-  createdAt?: string;
-  preferences?: {
-    currency: string;
-    theme: string;
-    notifications: boolean;
-  };
-  [key: string]: any;
-}
-
-// Original response type (maintaining backward compatibility)
-export interface AuthResponse {
-  user: User;
-  token: string;
-}
-
-// New response type for login/register endpoints
-export interface TokenAuthResponse {
-  user: User;
-  accessToken: string;
-  refreshToken: string;
-}
-
-export interface LoginCredentials {
-  email: string;
-  password: string;
-}
-
-export interface RegisterData {
-  username: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-  firstName?: string;
-  lastName?: string;
-}
 
 /**
  * Validate an authentication token
  */
-export async function validateToken(token: string): Promise<AuthResponse | null> {
+export async function validateToken(token: string): Promise<TokenAuthResponse | null> {
   try {
     const response = await apiClient.get<ApiResponse<User>>('/auth/validate', {
       headers: {
@@ -64,8 +27,9 @@ export async function validateToken(token: string): Promise<AuthResponse | null>
     if (!response.data.success || !response.data.data) return null;
     
     return {
-      user: response.data.data, // Removed unnecessary ! assertion
-      token
+      user: response.data.data,
+      accessToken: token,
+      refreshToken: localStorage.getItem('refreshToken') || ''
     };
   } catch (error) {
     console.error("Token validation error:", error);
@@ -76,19 +40,13 @@ export async function validateToken(token: string): Promise<AuthResponse | null>
 /**
  * Refresh an expired token using a refresh token
  */
-export async function refreshToken(refreshToken: string): Promise<{accessToken: string, refreshToken: string} | null> {
+export async function refreshToken(refreshToken: string): Promise<TokenResponse | null> {
   try {
-    const response = await apiClient.post<ApiResponse<{
-      accessToken: string;
-      refreshToken: string;
-    }>>('/auth/refresh-token', { refreshToken });
+    const response = await apiClient.post<ApiResponse<TokenResponse>>('/auth/refresh-token', { refreshToken });
     
     if (!response.data.success || !response.data.data) return null;
     
-    return {
-      accessToken: response.data.data.accessToken, // Removed unnecessary ! assertion
-      refreshToken: response.data.data.refreshToken // Removed unnecessary ! assertion
-    };
+    return response.data.data;
   } catch (error) {
     console.error("Token refresh error:", error);
     return null;
@@ -98,7 +56,7 @@ export async function refreshToken(refreshToken: string): Promise<{accessToken: 
 /**
  * Complete authentication flow with token refresh
  */
-export async function authenticateWithRefresh(): Promise<AuthResponse | null> {
+export async function authenticateWithRefresh(): Promise<TokenAuthResponse | null> {
   const token = localStorage.getItem("accessToken");
   if (!token) return null;
   
@@ -121,7 +79,7 @@ export async function authenticateWithRefresh(): Promise<AuthResponse | null> {
   return await validateToken(refreshResult.accessToken);
 }
 
-// New functionality as a service object
+// Service object with all auth functionality
 const authService = {
   validateToken,
   refreshToken,
@@ -138,21 +96,31 @@ const authService = {
     try {
       const response = await apiClient.post<ApiResponse<TokenAuthResponse>>('/auth/register', apiData);
       
-      if (!response.data.success || !response.data.data) {
+      // Handle success check
+      if (response.data && response.data.success === false) {
         throw new Error(response.data.message || 'Registration failed');
+      }
+  
+      // Extract data, handling both response structures
+      const responseData = (response.data.data || response.data) as TokenAuthResponse;
+      
+      // Validate required fields exist
+      if (!responseData.user || !responseData.accessToken || !responseData.refreshToken) {
+        console.error('Invalid response structure:', response.data);
+        throw new Error('Registration successful but response format is invalid');
       }
       
       // Store tokens in localStorage
-      const { accessToken, refreshToken } = response.data.data;
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('accessToken', responseData.accessToken);
+      localStorage.setItem('refreshToken', responseData.refreshToken);
       
-      return response.data.data;
+      return {
+        user: responseData.user,
+        accessToken: responseData.accessToken,
+        refreshToken: responseData.refreshToken
+      };
     } catch (error: any) {
-      console.error('Full error object:', error);
-      console.error('Response status:', error.response?.status);
-      console.error('Response headers:', error.response?.headers);
-      console.error('Response data:', error.response?.data);
+      console.error('Registration error details:', error.response?.data);
       
       // More specific error handling
       const errorMessage = 
@@ -169,44 +137,47 @@ const authService = {
   /**
  * Log in a user with email and password
  */
-login: async (credentials: LoginCredentials): Promise<TokenAuthResponse> => {
-  console.log('Login request URL:', `${API_BASE_URL}/auth/login`);
-console.log('Frontend origin:', window.location.origin);
-  try {
-    console.log('Attempting login with:', {
-      email: credentials.email,
-      password: credentials.password ? '********' : 'missing'
-    });
-
-    const response = await apiClient.post<ApiResponse<TokenAuthResponse>>('/auth/login', credentials);
-    
-    if (!response.data.success || !response.data.data) {
-      throw new Error(response.data.message || 'Login failed');
-    }
-    
-    // Store tokens in localStorage
-    const { accessToken, refreshToken } = response.data.data;
-    localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('refreshToken', refreshToken);
-    
-    return response.data.data;
-  } catch (error: any) {
-    console.error('Full login error object:', error);
-    console.error('Response status:', error.response?.status);
-    console.error('Response headers:', error.response?.headers);
-    console.error('Response data:', error.response?.data);
-    
-    // More specific error handling
-    const errorMessage = 
-      error.response?.data?.message || 
-      error.response?.data?.error ||
-      error.response?.statusText ||
-      error.message ||
-      'Login failed';
+  login: async (credentials: LoginCredentials): Promise<TokenAuthResponse> => {
+    try {
+      const response = await apiClient.post<ApiResponse<TokenAuthResponse>>('/auth/login', credentials);
       
-    throw new Error(errorMessage);
-  }
-},
+      // Handle success check
+      if (response.data && response.data.success === false) {
+        throw new Error(response.data.message || 'Login failed');
+      }
+      
+      // Extract data, handling both response structures
+      const responseData = (response.data.data || response.data) as TokenAuthResponse;
+      
+      // Validate required fields exist
+      if (!responseData.user || !responseData.accessToken || !responseData.refreshToken) {
+        console.error('Invalid response structure:', response.data);
+        throw new Error('Login successful but response format is invalid');
+      }
+      
+      // Store tokens in localStorage
+      localStorage.setItem('accessToken', responseData.accessToken);
+      localStorage.setItem('refreshToken', responseData.refreshToken);
+      
+      return {
+        user: responseData.user,
+        accessToken: responseData.accessToken,
+        refreshToken: responseData.refreshToken
+      };
+    } catch (error: any) {
+      console.error('Login error details:', error.response?.data);
+      
+      // More specific error handling
+      const errorMessage = 
+        error.response?.data?.message || 
+        error.response?.data?.error ||
+        error.response?.statusText ||
+        error.message ||
+        'Login failed';
+        
+      throw new Error(errorMessage);
+    }
+  },
   
   /**
    * Log out the current user
@@ -230,7 +201,7 @@ console.log('Frontend origin:', window.location.origin);
   getCurrentUser: async (): Promise<User | null> => {
     try {
       const token = localStorage.getItem('accessToken');
-      if (!token) return null; // Add return statement here
+      if (!token) return null;
       
       const response = await apiClient.get<ApiResponse<User>>('/auth/validate');
       if (!response.data.success || !response.data.data) return null;
@@ -268,9 +239,7 @@ changePassword: async (currentPassword: string, newPassword: string): Promise<vo
     throw new Error(response.data.message || 'Failed to change password');
   }
 }
-
-
-
 };
+
 
 export default authService;

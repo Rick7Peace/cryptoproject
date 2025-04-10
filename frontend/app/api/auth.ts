@@ -1,32 +1,6 @@
-import type { User as AuthUser } from './index';
+import type { User, AuthResponse,  Role, UserPermissions } from '../types/authTypes';
 import apiClient from './apiClient';
 
-// Define types for authorization
-export interface AuthResponse {
-  success: boolean;
-  message: string;
-  accessToken?: string;
-  refreshToken?: string;
-  user?: AuthUser;
-}
-
-export interface Permission {
-  id: string;
-  name: string;
-  description: string;
-}
-
-export interface Role {
-  id: string;
-  name: string;
-  permissions: Permission[];
-}
-
-export interface UserPermissions {
-  userId: string;
-  roles: Role[];
-  permissions: Permission[];
-}
 
 /**
  * Authorization API service
@@ -173,7 +147,7 @@ const authApi = {
   /**
    * Get current user profile
    */
-  getCurrentUser: async (): Promise<AuthUser> => {
+  getCurrentUser: async (): Promise<User> => {
     try {
       const response = await apiClient.get('/auth/validate');
       

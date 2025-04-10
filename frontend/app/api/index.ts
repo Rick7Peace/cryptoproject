@@ -3,33 +3,11 @@ export * from './crypto';
 
 // Authentication API
 import axios from 'axios';
+import type { AuthResponse } from '../types/authTypes';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// Auth types
-export interface User {
-  _id: string;
-  username: string;
-  email: string;
-  firstName?: string;
-  lastName?: string;
-  profileImage?: string;
-  isVerified: boolean;
-  createdAt: string;
-  lastLogin?: string;
-  preferences: {
-    currency: string;
-    theme: string;
-    notifications: boolean;
-  };
-}
 
-export interface AuthResponse {
-  success: boolean;
-  user: User;
-  accessToken: string;
-  refreshToken: string;
-}
 
 // Auth API functions
 export const register = async (userData: {
