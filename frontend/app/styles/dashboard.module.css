@@ -1,0 +1,211 @@
+/* 
+  Tailwind v4 Approach - Uses CSS variables and direct utility classes
+  Styled to match the landing page theme with gradients and animations
+*/
+
+/* Custom properties for reusable values - matched to landing page */
+:root {
+    --dashboard-bg: #0f172a; /* bg-slate-900 equivalent */
+    --card-bg: #1e293b; /* bg-slate-800 equivalent */
+    --item-bg: rgba(51, 65, 85, 0.5); /* bg-slate-700/50 equivalent */
+    --item-bg-hover: #334155; /* bg-slate-700 equivalent */
+    --avatar-bg: #374151; /* bg-gray-700 equivalent */
+    
+    --text-default: #f3f4f6; /* text-gray-100 equivalent */
+    --text-body: #d1d5db; /* text-gray-300 equivalent */
+    --text-muted: #9ca3af; /* text-gray-400 equivalent */
+    
+    --blue-accent: #60a5fa; /* blue-400 equivalent */
+    --blue-primary: #2563eb; /* blue-600 equivalent */
+    --blue-hover: #1d4ed8; /* blue-700 equivalent */
+    --purple-accent: #a855f7; /* purple-500 equivalent */
+    --purple-primary: #9333ea; /* purple-600 equivalent */
+    
+    --green: #22c55e; /* text-green-500 equivalent */
+    --red: #ef4444; /* text-red-500 equivalent */
+  }
+    
+  /* Layout - Define base styles */
+  .dashboardContainer {
+    min-height: 100vh;
+    background-color: var(--dashboard-bg);
+    color: var(--text-default);
+  }
+  
+  .mainContent {
+    max-width: 80rem; /* max-w-7xl */
+    margin-left: auto;
+    margin-right: auto;
+    padding: 2rem 1rem; /* py-8 px-4 */
+  }
+  
+  @media (min-width: 640px) {
+    .mainContent {
+      padding-left: 1.5rem; /* sm:px-6 */
+      padding-right: 1.5rem; /* sm:px-6 */
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .mainContent {
+      padding-left: 2rem; /* lg:px-8 */
+      padding-right: 2rem; /* lg:px-8 */
+    }
+  }
+  
+  /* Loading spinner */
+  .loadingContainer {
+    display: flex;
+    justify-content: center;
+    padding-top: 3rem; /* py-12 */
+    padding-bottom: 3rem; /* py-12 */
+  }
+  
+  .loadingSpinner {
+    animation: spin 1s linear infinite;
+    height: 2rem; /* h-8 */
+    width: 2rem; /* w-8 */
+    color: var(--blue-accent);
+  }
+  
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  
+  .spinnerCircle {
+    opacity: 0.25;
+  }
+  
+  .spinnerPath {
+    opacity: 0.75;
+  }
+  
+  /* Card with gradient glow effect */
+  .cardGlow {
+    position: relative;
+  }
+  
+  .cardGlow::before {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(to right, var(--blue-primary), var(--purple-primary));
+    border-radius: 0.5rem;
+    opacity: 0.5;
+    filter: blur(8px);
+    z-index: 0;
+  }
+  
+  .card {
+    position: relative;
+    background-color: var(--card-bg);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    z-index: 1;
+  }
+  
+  /* Auto-refresh section */
+  .refreshControls {
+    margin-top: 1.5rem; /* mt-6 */
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.75rem; /* space-x-3 equivalent */
+  }
+  
+  .lastUpdatedTime {
+    font-size: 0.875rem; /* text-sm */
+    color: var(--text-muted);
+  }
+  
+  .refreshControlsGroup {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem; /* space-x-2 equivalent */
+  }
+  
+  .refreshLabel {
+    font-size: 0.75rem; /* text-xs */
+    color: var(--text-muted);
+  }
+  
+  .refreshSelect {
+    background-color: white;
+    font-size: 0.75rem; /* text-xs */
+    color: #374151; /* text-gray-700 */
+    border-radius: 0.25rem; /* rounded */
+    padding: 0.25rem 0.5rem; /* px-2 py-1 */
+    border: 1px solid #d1d5db; /* border border-gray-300 */
+  }
+  
+  .refreshButton {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.375rem; /* p-1.5 */
+    border: 1px solid transparent;
+    border-radius: 0.25rem; /* rounded */
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
+    color: white;
+    background-color: var(--blue-primary);
+    transition: background-color 0.15s ease;
+  }
+  
+  .refreshButton:hover {
+    background-color: var(--blue-hover);
+  }
+  
+  /* Price change animations */
+  .priceUp {
+    color: var(--green);
+    transition: color 1s ease;
+  }
+  
+  .priceDown {
+    color: var(--red);
+    transition: color 1s ease;
+  }
+  
+  /* Loading pulse animation */
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+  
+  .loadingPulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  /* Gradient text like landing page */
+  .gradientText {
+    background: linear-gradient(to right, var(--blue-accent), var(--purple-accent));
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+  
+  /* Button styles matching landing page */
+  .primaryButton {
+    padding: 0.75rem 2rem;
+    background: linear-gradient(to right, var(--blue-primary), var(--purple-primary));
+    border-radius: 0.5rem;
+    text-align: center;
+    color: white;
+    font-weight: 500;
+    font-size: 1.125rem;
+    transition: opacity 0.15s ease;
+    box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.2);
+  }
+  
+  .primaryButton:hover {
+    opacity: 0.9;
+  }

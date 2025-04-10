@@ -4,10 +4,16 @@ import type { Crypto } from '~/types/cryptoTypes';
 interface CryptoItemProps {
   crypto: Crypto;
   isRemoving: boolean;
+  isNew?: boolean;
   onRemove: () => void;
 }
 
-export const CryptoItem: React.FC<CryptoItemProps> = ({ crypto, isRemoving, onRemove }) => {
+export const CryptoItem: React.FC<CryptoItemProps> = ({ 
+  crypto, 
+  isRemoving,
+  isNew = false, 
+  onRemove 
+}) => {
   // Helper functions moved to this component
   const getPriceChangeClassName = (priceChange: number | undefined): string => {
     if (typeof priceChange !== 'number') {
@@ -32,12 +38,13 @@ export const CryptoItem: React.FC<CryptoItemProps> = ({ crypto, isRemoving, onRe
   };
   
   return (
-    <li 
-      className={`transition-all duration-300 ${
-        isRemoving ? 'opacity-50 scale-95' : 'opacity-100'
-      }`}
-    >
-      <div className="px-4 py-4 sm:px-6 flex items-center justify-between hover:bg-slate-700/50 transition">
+    <div className={`transition-all duration-300 ${isRemoving ? 'opacity-50 scale-95' : 'opacity-100'} ${isNew ? 'animate-pulse-once bg-blue-500/10' : ''}`}>
+      <div className="px-4 py-4 sm:px-6 flex items-center justify-between hover:bg-slate-700/50 transition relative">
+        {isNew && (
+          <div className="absolute top-0 right-0 -mt-1 -mr-1">
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-500 text-white">New</span>
+          </div>
+        )}
         <div className="flex items-center">
           {crypto.image ? (
             <img 
@@ -84,6 +91,6 @@ export const CryptoItem: React.FC<CryptoItemProps> = ({ crypto, isRemoving, onRe
           </button>
         </div>
       </div>
-    </li>
+    </div>
   );
 };

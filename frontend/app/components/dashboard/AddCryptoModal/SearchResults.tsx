@@ -36,9 +36,9 @@ const SearchResults: React.FC<SearchResultsProps> = ({
   return (
     <div className="mt-4">
       <h4 className="text-sm font-medium text-gray-400 mb-2">Search results</h4>
-      <ul className="divide-y divide-slate-700">
+      <div className="divide-y divide-slate-700">
         {results.map((result) => (
-          <li key={result._id || result.coinId} className="py-3">
+          <div key={result._id || result.coinId} className="py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 {result.image && <img className="h-8 w-8 rounded-full" src={result.image} alt={result.name} />}
@@ -54,9 +54,9 @@ const SearchResults: React.FC<SearchResultsProps> = ({
                 Add
               </button>
             </div>
-          </li>
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 };

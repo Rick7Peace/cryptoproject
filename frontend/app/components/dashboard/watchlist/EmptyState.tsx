@@ -6,7 +6,7 @@ interface EmptyStateProps {
 
 export const EmptyState: React.FC<EmptyStateProps> = ({ onAddCrypto }) => {
   return (
-    <li className="px-4 py-8 text-center text-gray-400">
+    <div className="px-4 py-8 text-center text-gray-400">
       <p>No cryptocurrencies in your watchlist yet</p>
       <button
         onClick={onAddCrypto}
@@ -17,6 +17,6 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ onAddCrypto }) => {
         </svg>
         Add Your First Crypto
       </button>
-    </li>
+    </div>
   );
 };

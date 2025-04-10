@@ -23,16 +23,46 @@ const WatchlistCryptoList: React.FC<WatchlistCryptoListProps> = ({
   // Keep a local copy of cryptos to handle transitions and prevent disappearing
   const [localCryptos, setLocalCryptos] = useState<Crypto[]>(cryptos);
   const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
+  const [newlyAddedIds, setNewlyAddedIds] = useState<Set<string>>(new Set());
   const [isAddingCrypto, setIsAddingCrypto] = useState(false);
+  const [forceUpdate, setForceUpdate] = useState(0); // Used to force re-render
   
   // Update local cryptos whenever the prop changes
   useEffect(() => {
     if (cryptos?.length) {
-      // Sort the cryptos by name to maintain consistent ordering
-      const sortedCryptos = [...cryptos].sort((a, b) => 
-        (a.name || '').localeCompare(b.name || '')
-      );
-      setLocalCryptos(sortedCryptos);
+      // Find any new cryptos that weren't in our previous state
+      const newIds = new Set<string>();
+      cryptos.forEach(crypto => {
+        const id = crypto.coinId || crypto._id;
+        if (id && !localCryptos.some(c => (c.coinId || c._id) === id)) {
+          newIds.add(id);
+        }
+      });
+      
+      // Update the newly added IDs
+      if (newIds.size > 0) {
+        setNewlyAddedIds(newIds);
+        
+        // Sort and update the cryptos first
+        const sortedCryptos = [...cryptos].sort((a, b) => 
+          (a.name || '').localeCompare(b.name || '')
+        );
+        setLocalCryptos(sortedCryptos);
+        
+        // Force re-render after a short delay to make the animation more noticeable
+        setTimeout(() => {
+          setForceUpdate(prev => prev + 1);
+        }, 500);
+        
+        // Clear the "new" status after animation completes
+        setTimeout(() => setNewlyAddedIds(new Set()), 2000);
+      } else {
+        // Sort the cryptos by name to maintain consistent ordering
+        const sortedCryptos = [...cryptos].sort((a, b) => 
+          (a.name || '').localeCompare(b.name || '')
+        );
+        setLocalCryptos(sortedCryptos);
+      }
     } else {
       setLocalCryptos([]);
     }
@@ -52,6 +82,7 @@ const WatchlistCryptoList: React.FC<WatchlistCryptoListProps> = ({
       setTimeout(() => setIsAddingCrypto(false), 1000);
     }
   };
+
   const handleRemove = (coinId: string) => {
     if (!coinId) return;
     
@@ -71,6 +102,7 @@ const WatchlistCryptoList: React.FC<WatchlistCryptoListProps> = ({
       });
     }
   };
+
   return (
     <>
       <WatchlistHeader 
@@ -79,31 +111,38 @@ const WatchlistCryptoList: React.FC<WatchlistCryptoListProps> = ({
         isLoading={isLoading || isAddingCrypto}
       />
 
-      <div className="relative">
+      <div className="relative" key={`watchlist-${forceUpdate}`}>
         <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg blur opacity-30"></div>
-        <div className="relative bg-slate-800 shadow overflow-hidden sm:rounded-lg">
+        <div className="relative bg-slate-800 shadow overflow-hidden sm:rounded-lg p-4">
           {isLoading && localCryptos.length === 0 ? (
             <LoadingState />
           ) : (
-            <ul className="divide-y divide-slate-700">
-              {localCryptos.map((crypto) => (
-                <CryptoItem 
-                  key={crypto.coinId || crypto._id}
-                  crypto={crypto}
-                  isRemoving={removingIds.has(crypto.coinId)}
-                  onRemove={() => handleRemove(crypto.coinId)}
-                />
-              ))}
-              
-              {localCryptos.length === 0 && !isLoading && (
+            <>
+              {localCryptos.length === 0 && !isLoading ? (
                 <EmptyState onAddCrypto={onAddCrypto} />
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {localCryptos.map((crypto) => {
+                    const id = crypto.coinId || crypto._id || '';
+                    const isNew = newlyAddedIds.has(id);
+                    return (
+                      <CryptoItem 
+                        key={`${id}-${isNew ? "new" : "existing"}`}
+                        crypto={crypto}
+                        isRemoving={removingIds.has(crypto.coinId)}
+                        isNew={isNew}
+                        onRemove={() => handleRemove(crypto.coinId)}
+                      />
+                    );
+                  })}
+                </div>
               )}
-            </ul>
+            </>
           )}
         </div>
       </div>
     </>
   );
-};
+}
 
 export default WatchlistCryptoList;
