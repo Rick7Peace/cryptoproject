@@ -1,6 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import authService from '../services/authService';
-import type { User, LoginCredentials, RegisterData } from '../services/authService';
+import type { 
+  User, 
+  LoginCredentials, 
+  RegisterData 
+} from '../types/authTypes';
 
 // Define your context types
 interface AuthContextType {
@@ -38,8 +42,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             isAuthenticated: true,
             isLoading: false,
             error: null,
-            // Fix: Use the correct property name from the AuthResponse type
-            token: authResult.token || null
+            // Fix: Use accessToken property from TokenAuthResponse
+            token: authResult.accessToken || null
           });
         } else {
           setState(prev => ({ ...prev, isLoading: false }));
@@ -66,7 +70,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: true,
         isLoading: false,
         error: null,
-        // Fix: Only use accessToken property
         token: result.accessToken || null
       });
     } catch (error) {
@@ -89,10 +92,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: true,
         isLoading: false,
         error: null,
-        // Fix: Only use accessToken property
         token: result.accessToken || null
       });
     } catch (error) {
+      console.error('Detailed registration error:', error);
       setState(prev => ({
         ...prev,
         isLoading: false,
