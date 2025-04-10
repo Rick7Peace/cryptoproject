@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "prebuild": "npm i esbuild @esbuild/linux-x64 --no-save || echo 'Platform binaries already installed'",
+    "prebuild": "npm i esbuild @esbuild/linux-x64 lightningcss --no-save || echo 'Platform binaries already installed'",
     "build": "NODE_OPTIONS=--max_old_space_size=4096 react-router build",
     "postbuild": "node -e \"require('fs').copyFileSync('public/_redirects', 'build/client/_redirects')\"",
     "dev": "react-router dev",
