@@ -111,7 +111,7 @@ Crypto Portfolio Tracker provides investors with a comprehensive platform to man
    npm start
    ```
 
-   The application will be available at http://localhost:3000
+   The application will be available at http://localhost:3000 or https://cryptotrack-oitv.onrender.com/
 
 ## 🛠️ Technologies Used
 
