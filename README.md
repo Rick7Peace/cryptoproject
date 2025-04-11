@@ -56,7 +56,8 @@ Crypto Portfolio Tracker provides investors with a comprehensive platform to man
 
 ## 🖼️ Screenshots
 
-*[Consider adding 3-4 screenshots showing the main interfaces of your application here]*
+![Dashboard View](frontend\public\images\image.png)
+
 
 ## 🚀 Getting Started
 
@@ -110,7 +111,7 @@ Crypto Portfolio Tracker provides investors with a comprehensive platform to man
    npm start
    ```
 
-   The application will be available at http://localhost:3000
+   The application will be available at http://localhost:3000 or https://cryptotrack-oitv.onrender.com/
 
 ## 🛠️ Technologies Used
 
@@ -140,6 +141,10 @@ We welcome contributions to improve the Crypto Portfolio Tracker! Please follow 
 ## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+# Deployment Link 
+
+https://cryptotrack-oitv.onrender.com/
 
 ## 📞 Contact
 

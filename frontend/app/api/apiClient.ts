@@ -1,5 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import type { AxiosRequestConfig } from 'axios';
+import storageService from '../services/storageService';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://cryptotrack-api-ezlm.onrender.com/api';
 
@@ -21,9 +22,9 @@ const apiClient = axios.create({
 // Request interceptor
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    const { accessToken } = storageService.getAuthData();
+    if (accessToken) {
+      config.headers.Authorization = `Bearer ${accessToken}`;
     }
     return config;
   },
@@ -41,7 +42,7 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
       
       try {
-        const refreshToken = localStorage.getItem('refreshToken');
+        const { refreshToken } = storageService.getAuthData();
         if (!refreshToken) throw new Error('No refresh token available');
         
         // Attempt to refresh the token
@@ -52,16 +53,18 @@ apiClient.interceptors.response.use(
         
         if (!response.data.accessToken) throw new Error('Token refresh failed');
         
-        // Store new tokens
-        localStorage.setItem('accessToken', response.data.accessToken);
-        localStorage.setItem('refreshToken', response.data.refreshToken);
+        // Store new tokens with centralized service
+        storageService.setAuthData(
+          response.data.accessToken,
+          response.data.refreshToken,
+          storageService.getAuthData().user
+        );
         
         // Retry the original request
         return apiClient(originalRequest);
       } catch (refreshError) {
         // On refresh failure, clear tokens and redirect to login
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        storageService.clearAuthData();
         window.location.href = '/login?session=expired';
         return Promise.reject(refreshError);
       }

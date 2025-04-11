@@ -1,0 +1,114 @@
+/* 
+  Header styling for Dashboard - matches landing page visual theme
+  Uses the same CSS variables defined in dashboard.module.css
+*/
+
+/* Reuse variables from dashboard.module.css */
+:root {
+    --card-bg: #1e293b; /* bg-slate-800 equivalent */
+    --border-color: #334155; /* border-slate-700 equivalent */
+    --text-default: #f3f4f6; /* text-gray-100 equivalent */
+    --text-muted: #9ca3af; /* text-gray-400 equivalent */
+    --blue-accent: #60a5fa; /* blue-400 equivalent */
+    --blue-primary: #2563eb; /* blue-600 equivalent */
+    --purple-accent: #a855f7; /* purple-500 equivalent */
+    --purple-primary: #9333ea; /* purple-600 equivalent */
+  }
+  
+  /* Header container */
+  .header {
+    background-color: var(--card-bg);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid var(--border-color);
+  }
+  
+  /* Inner container with responsive padding */
+  .container {
+    max-width: 80rem; /* max-w-7xl */
+    margin-left: auto;
+    margin-right: auto;
+    padding: 1rem 1rem; /* py-4 px-4 */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  @media (min-width: 640px) {
+    .container {
+      padding-left: 1.5rem; /* sm:px-6 */
+      padding-right: 1.5rem; /* sm:px-6 */
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .container {
+      padding-left: 2rem; /* lg:px-8 */
+      padding-right: 2rem; /* lg:px-8 */
+    }
+  }
+  
+  /* Logo styling */
+  .logo {
+    font-size: 1.5rem; /* text-2xl */
+    font-weight: 700; /* font-bold */
+  }
+  
+  .logoLink {
+    transition: opacity 0.15s ease;
+  }
+  
+  .logoLink:hover {
+    opacity: 0.8;
+  }
+  
+  .logoText {
+    background: linear-gradient(to right, var(--blue-accent), var(--purple-accent));
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+  
+  /* User info section */
+  .userSection {
+    display: flex;
+    align-items: center;
+  }
+  
+  .userInfo {
+    margin-right: 1rem; /* mr-4 */
+    text-align: right;
+  }
+  
+  .welcomeText {
+    display: block;
+    font-size: 0.875rem; /* text-sm */
+    font-weight: 500; /* font-medium */
+    color: var(--text-muted);
+  }
+  
+  .username {
+    font-size: 0.875rem; /* text-sm */
+    color: var(--text-default);
+  }
+  
+  /* Refresh button */
+  .refreshButton {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem; /* p-2 */
+    border: 1px solid transparent;
+    border-radius: 9999px; /* rounded-full */
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    background: linear-gradient(to right, var(--blue-primary), var(--purple-primary));
+    color: white;
+    transition: opacity 0.15s ease;
+  }
+  
+  .refreshButton:hover {
+    opacity: 0.9;
+  }
+  
+  .refreshIcon {
+    height: 1.25rem; /* h-5 */
+    width: 1.25rem; /* w-5 */
+  }

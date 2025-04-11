@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { getTopCryptos, getCryptoPrices } from '~/services/cryptoService';
 import type { Crypto } from '~/types/cryptoTypes';
 import ErrorAlert from '~/components/dashboard/ErrorAlert';
+import { useAuth } from '~/context/AuthContext';
 
 const LandingHero: React.FC = () => {
+  const { isAuthenticated } = useAuth();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [trendingCoins, setTrendingCoins] = useState<Crypto[]>([]);
   const [displayCoins, setDisplayCoins] = useState<Crypto[]>([]);
@@ -171,12 +173,25 @@ const LandingHero: React.FC = () => {
           Track, analyze, and optimize your cryptocurrency investments with powerful tools and real-time data.
         </p>
         <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
-          <Link to="/register" className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg text-center hover:opacity-90 transition text-white font-medium text-lg shadow-lg shadow-blue-500/20">
-            Get Started
-          </Link>
-          <Link to="/demo" className="px-8 py-3 border border-blue-400 rounded-lg text-center hover:bg-blue-900/20 transition text-blue-400 font-medium text-lg">
-            View Demo
-          </Link>
+          {isAuthenticated ? (
+            <>
+              <Link to="/dashboard" className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg text-center hover:opacity-90 transition text-white font-medium text-lg shadow-lg shadow-blue-500/20">
+                Go to Dashboard
+              </Link>
+              <Link to="/portfolio" className="px-8 py-3 border border-blue-400 rounded-lg text-center hover:bg-blue-900/20 transition text-blue-400 font-medium text-lg">
+                View Portfolio
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link to="/register" className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg text-center hover:opacity-90 transition text-white font-medium text-lg shadow-lg shadow-blue-500/20">
+                Get Started
+              </Link>
+              <Link to="/demo" className="px-8 py-3 border border-blue-400 rounded-lg text-center hover:bg-blue-900/20 transition text-blue-400 font-medium text-lg">
+                View Demo
+              </Link>
+            </>
+          )}
         </div>
       </div>
 
