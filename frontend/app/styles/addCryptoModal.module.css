@@ -1,0 +1,130 @@
+/* 
+  AddCryptoModal styles - matches dashboard theme with gradients and animations
+  Uses the same CSS variables as defined in dashboard.module.css
+*/
+
+/* Modal container and overlay */
+.modalOverlay {
+    position: fixed;
+    z-index: 10;
+    inset: 0;
+    overflow-y: auto;
+  }
+  
+  .modalBackdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(17, 24, 39, 0.75); /* bg-gray-900 bg-opacity-75 */
+    transition: opacity 0.3s ease;
+  }
+  
+  .modalContainer {
+    display: flex;
+    min-height: 100vh;
+    padding-top: 1rem; /* pt-4 */
+    padding-bottom: 5rem; /* pb-20 */
+    padding-left: 1rem; /* px-4 */
+    padding-right: 1rem; /* px-4 */
+    text-align: center;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  
+  @media (min-width: 640px) {
+    .modalContainer {
+      display: block;
+      padding: 0;
+    }
+  }
+  
+  .modalAlignmentHelper {
+    display: none;
+  }
+  
+  @media (min-width: 640px) {
+    .modalAlignmentHelper {
+      display: inline-block;
+      height: 100vh;
+      vertical-align: middle;
+    }
+  }
+  
+  /* Modal content */
+  .modalContent {
+    display: inline-block;
+    vertical-align: bottom;
+    border-radius: 0.5rem; /* rounded-lg */
+    padding: 1.25rem 1rem 1rem; /* px-4 pt-5 pb-4 */
+    text-align: left;
+    overflow: hidden;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); /* shadow-xl */
+    transform: translate(0, 0); /* part of transform transition */
+    transition: all 0.3s ease; /* transition-all */
+    position: relative;
+  }
+  
+  @media (min-width: 640px) {
+    .modalContent {
+      margin-top: 2rem; /* sm:my-8 */
+      margin-bottom: 2rem; /* sm:my-8 */
+      vertical-align: middle;
+      max-width: 32rem; /* sm:max-w-lg */
+      width: 100%; /* sm:w-full */
+      padding: 1.5rem; /* sm:p-6 */
+    }
+  }
+  
+  /* Gradient glow effect around the modal */
+  .gradientGlow {
+    position: absolute;
+    inset: -2px; /* -inset-0.5 */
+    background: linear-gradient(to right, var(--blue-primary), var(--purple-primary)); 
+    border-radius: 0.5rem; /* rounded-lg */
+    opacity: 0.3; /* opacity-30 */
+    filter: blur(8px); /* blur */
+  }
+  
+  .modalBody {
+    position: relative;
+    background-color: var(--card-bg);
+    border-radius: 0.5rem; /* rounded-lg */
+    padding: 1.5rem; /* p-6 */
+  }
+  
+  /* Close button */
+  .closeButtonContainer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding-top: 1rem; /* pt-4 */
+    padding-right: 1rem; /* pr-4 */
+  }
+  
+  .closeButton {
+    background-color: transparent;
+    border-radius: 0.375rem; /* rounded-md */
+    color: var(--text-muted);
+    transition: color 0.15s ease; /* transition */
+  }
+  
+  .closeButton:hover {
+    color: #e5e7eb; /* text-gray-200 */
+  }
+  
+  .closeIcon {
+    height: 1.5rem; /* h-6 */
+    width: 1.5rem; /* w-6 */
+  }
+  
+  /* Modal Title */
+  .modalTitle {
+    font-size: 1.125rem; /* text-lg */
+    line-height: 1.5rem; /* leading-6 */
+    font-weight: 500; /* font-medium */
+    color: var(--text-default);
+    margin-bottom: 1rem; /* mb-4 */
+  }
+  
+  .modalContent {
+    margin-top: 0.5rem; /* mt-2 */
+  }

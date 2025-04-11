@@ -1,0 +1,136 @@
+/* 
+  CryptoItem component styles
+  Uses the same CSS variables from dashboard.module.css
+*/
+
+/* Item container */
+.item {
+    position: relative;
+    background-color: var(--item-bg);
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.15s ease;
+  }
+  
+  .item:hover {
+    background-color: var(--item-bg-hover);
+  }
+  
+  /* Animation for newly added items */
+  .newItem {
+    animation: fadeIn 0.5s ease-out;
+  }
+  
+  /* Animation for removing items */
+  .removing {
+    animation: fadeOut 0.3s ease-out;
+    opacity: 0.5;
+    pointer-events: none;
+  }
+  
+  /* Icon container */
+  .iconContainer {
+    width: 2rem;
+    height: 2rem;
+    background-color: var(--avatar-bg);
+    border-radius: 9999px;
+    margin-right: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  
+  /* Left section with crypto info */
+  .infoSection {
+    display: flex;
+    align-items: center;
+  }
+  
+  .cryptoDetails {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .name {
+    font-weight: 500;
+  }
+  
+  .symbol {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+  
+  /* Right section with price info */
+  .priceSection {
+    text-align: right;
+  }
+  
+  .price {
+    font-weight: 500;
+    transition: color 1s ease;
+  }
+  
+  .priceUp {
+    color: var(--green);
+  }
+  
+  .priceDown {
+    color: var(--red);
+  }
+  
+  .priceChange {
+    font-size: 0.875rem;
+  }
+  
+  .positive {
+    color: var(--green);
+  }
+  
+  .negative {
+    color: var(--red);
+  }
+  
+  /* Action buttons */
+  .removeButton {
+    opacity: 0;
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    padding: 0.25rem;
+    border-radius: 9999px;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    transition: opacity 0.15s ease;
+  }
+  
+  .item:hover .removeButton {
+    opacity: 1;
+  }
+  
+  /* Animations */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes fadeOut {
+    from {
+      opacity: 1;
+      transform: scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+  }
