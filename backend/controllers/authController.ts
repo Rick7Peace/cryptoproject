@@ -174,7 +174,8 @@ export const logout = async (req: Request, res: Response) => {
       message: 'Logged out successfully',
     });
   } catch (error) {
-    res.status(500).json({
+    console.error('Error during logout:', error);
+        res.status(500).json({
       success: false,
       message: 'Error logging out',
     });
@@ -202,7 +203,8 @@ export const validateToken = async (req: Request, res: Response) => {
       user: userObj
     });
   } catch (error) {
-    res.status(500).json({
+    console.error('Error validating token:', error);
+        res.status(500).json({
       success: false,
       message: 'Error validating token'
     });
